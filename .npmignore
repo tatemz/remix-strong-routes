@@ -1,0 +1,11 @@
+/.github
+/src
+.eslintrc
+.gitignore
+.npmignore
+.npmrc
+tsconfig.json
+coverage
+vitest.config.ts
+*.tgz
+package
