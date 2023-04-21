@@ -1,0 +1,70 @@
+{
+  "name": "remix-strong-routes",
+  "version": "0.0.1",
+  "description": "Worry-free Remix routes with Typescript",
+  "engines": {
+    "node": ">=14"
+  },
+  "browser": "./browser/index.js",
+  "main": "./build/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run build:browser && npm run build:main",
+    "build:browser": "npx --no-install tsc --project tsconfig.json --module ESNext --outDir ./browser",
+    "build:main": "npx --no-install tsc --project tsconfig.json --module CommonJS --outDir ./build",
+    "typecheck": "npx --no-install tsc --project tsconfig.json --noEmit",
+    "lint": "npx --no-install eslint --no-error-on-unmatched-pattern --ext .ts,.tsx src",
+    "lint:report": "npm run lint -- --output-file eslint_report.json --format json",
+    "format": "npx --no-install prettier --write --ignore-unknown .",
+    "test": "npx --no-install vitest run",
+    "test:watch": "npx --no-install vitest",
+    "test:coverage": "npx --no-install vitest run --coverage"
+  },
+  "keywords": [
+    "remix",
+    "remix.run",
+    "react",
+    "request",
+    "response"
+  ],
+  "author": {
+    "name": "tatemz",
+    "url": "https://github.com/tatemz",
+    "email": "tatemz@proton.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tatemz/remix-strong-routes"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@remix-run/react": "^1.15.0",
+    "@remix-run/server-runtime": "^1.15.0",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "@remix-run/testing": "^1.15.0",
+    "@testing-library/react": "^14.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "@vitest/coverage-c8": "^0.30.1",
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jest": "^27.2.1",
+    "eslint-plugin-jest-dom": "^4.0.3",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-testing-library": "^5.10.3",
+    "isomorphic-fetch": "^3.0.0",
+    "jest": "^29.5.0",
+    "jsdom": "^21.1.1",
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.4",
+    "vitest": "^0.30.1",
+    "vitest-github-actions-reporter": "^0.10.0"
+  }
+}

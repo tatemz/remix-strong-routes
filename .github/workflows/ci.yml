@@ -1,0 +1,80 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Use Node LTS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm install
+
+      - name: Build
+        run: npm run build
+
+  typecheck:
+    name: Typechecker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Use Node LTS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm i
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Use Node LTS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm i
+
+      - name: Test
+        run: npm run test:coverage
+
+  lint:
+    name: Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Use Node LTS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm i
+
+      - name: Build
+        run: npm run lint
