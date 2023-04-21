@@ -20,27 +20,27 @@ export type PickDataAndStatus<
 
 type Errorable<T, E> = [T, null] | [null, E];
 
-export type LoaderErrorable<
+export type StrongErrorable<
   T extends StrongResponse<unknown, HttpStatusCode>,
   E extends StrongResponse<unknown, HttpStatusCode>
 > = [E] extends [never] ? [T, null] : Errorable<T, E>;
 
 export type RouteErrorableSuccess<
-  T extends LoaderErrorable<
+  T extends StrongErrorable<
     StrongResponse<unknown, HttpStatusCode>,
     StrongResponse<unknown, HttpStatusCode> | never
   >
 > = Exclude<T[0], null>;
 
 export type RouteErrorableFailure<
-  T extends LoaderErrorable<
+  T extends StrongErrorable<
     StrongResponse<unknown, HttpStatusCode>,
     StrongResponse<unknown, HttpStatusCode> | never
   >
 > = Exclude<T[1], null>;
 
 export type StrongLoader<
-  T extends LoaderErrorable<
+  T extends StrongErrorable<
     StrongResponse<unknown, HttpStatusCode>,
     StrongResponse<unknown, HttpStatusCode> | never
   >
@@ -50,24 +50,24 @@ export type StrongAction<T extends StrongResponse<unknown, HttpStatusCode>> = (
   args: DataFunctionArgs
 ) => Promise<T>;
 
-export type LoaderSuccessComponent<
+export type StrongComponent<
   T extends StrongResponse<unknown, HttpStatusCode>,
   TT extends PickDataAndStatus<T> = PickDataAndStatus<T>
 > = (props: TT) => JSX.Element;
 
-export type LoaderFailureComponent<
+export type StrongErrorBoundary<
   T extends StrongResponse<unknown, HttpStatusCode>
 > = (props: PickDataAndStatus<T>) => JSX.Element;
 
-export type BuildRemixRouteExportsOpts<
-  LoaderResponse extends LoaderErrorable<
+export type BuildStrongRemixRouteExportsOpts<
+  LoaderResponse extends StrongErrorable<
     StrongResponse<unknown, HttpStatusCode>,
     StrongResponse<unknown, HttpStatusCode> | never
   >,
   ActionResponse extends StrongResponse<unknown, HttpStatusCode>
 > = {
-  loaderSuccess: LoaderSuccessComponent<RouteErrorableSuccess<LoaderResponse>>;
-  loaderFailure: LoaderFailureComponent<RouteErrorableFailure<LoaderResponse>>;
+  loaderSuccess: StrongComponent<RouteErrorableSuccess<LoaderResponse>>;
+  loaderFailure: StrongErrorBoundary<RouteErrorableFailure<LoaderResponse>>;
   action: [ActionResponse] extends [never]
     ? undefined
     : StrongAction<ActionResponse>;
@@ -75,7 +75,7 @@ export type BuildRemixRouteExportsOpts<
   meta?: MetaFunction;
 };
 
-export type RemixRouteExports = {
+export type StrongRemixRouteExports = {
   default: RouteComponent;
   action: ActionFunction | undefined;
   loader: LoaderFunction;

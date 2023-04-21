@@ -1,9 +1,9 @@
 import { HttpStatusCode } from "./HttpStatusCode";
 import {
-  LoaderErrorable,
+  StrongErrorable,
   StrongResponse,
-  BuildRemixRouteExportsOpts,
-  RemixRouteExports,
+  BuildStrongRemixRouteExportsOpts,
+  StrongRemixRouteExports,
   RouteErrorableSuccess,
   RouteErrorableFailure,
 } from "./types";
@@ -12,14 +12,14 @@ import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { createElement } from "react";
 
 export const buildStrongRoute = <
-  LoaderResponse extends LoaderErrorable<
+  LoaderResponse extends StrongErrorable<
     StrongResponse<unknown, HttpStatusCode>,
     StrongResponse<unknown, HttpStatusCode>
   >,
   ActionResponse extends StrongResponse<unknown, HttpStatusCode> = never
 >(
-  opts: BuildRemixRouteExportsOpts<LoaderResponse, ActionResponse>
-): RemixRouteExports => ({
+  opts: BuildStrongRemixRouteExportsOpts<LoaderResponse, ActionResponse>
+): StrongRemixRouteExports => ({
   default: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const data = useStrongLoaderData<RouteErrorableSuccess<LoaderResponse>>();

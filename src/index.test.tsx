@@ -9,9 +9,9 @@ import { buildStrongRoute } from "./buildStrongRoute";
 import { strongResponse } from "./strongResponse";
 import {
   StrongResponse,
-  LoaderErrorable,
-  LoaderFailureComponent,
-  LoaderSuccessComponent,
+  StrongErrorable,
+  StrongErrorBoundary,
+  StrongComponent,
 } from "./types";
 
 describe("strongResponse", () => {
@@ -48,7 +48,7 @@ describe("strongResponse", () => {
   });
 });
 
-describe("buildRemixRouteExports", () => {
+describe("buildStrongRoute", () => {
   type FooResponse = StrongResponse<"Foo", HttpStatusCode.OK>;
   type BarResponse = StrongResponse<
     "Bar",
@@ -58,7 +58,7 @@ describe("buildRemixRouteExports", () => {
   type LoaderSuccessResponse = FooResponse;
   type LoaderFailureResponse = BarResponse;
 
-  type LoaderResponse = LoaderErrorable<
+  type LoaderResponse = StrongErrorable<
     LoaderSuccessResponse,
     LoaderFailureResponse
   >;
@@ -73,15 +73,11 @@ describe("buildRemixRouteExports", () => {
     status: HttpStatusCode.INTERNAL_SERVER_ERROR,
   };
 
-  const loaderSuccess: LoaderSuccessComponent<LoaderSuccessResponse> = (
-    props
-  ) => {
+  const loaderSuccess: StrongComponent<LoaderSuccessResponse> = (props) => {
     return <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>;
   };
 
-  const loaderFailure: LoaderFailureComponent<LoaderFailureResponse> = (
-    props
-  ) => {
+  const loaderFailure: StrongErrorBoundary<LoaderFailureResponse> = (props) => {
     return <pre data-testid="failure">{JSON.stringify(props, null, 2)}</pre>;
   };
 
