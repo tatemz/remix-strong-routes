@@ -79,27 +79,12 @@ const strongLoader: StrongLoader<
 ```ts
 import { StrongAction } from "remix-strong-routes";
 
-const strongAction: StrongAction<FooResponse, RedirectToLogin> = async ({
-  context,
-  request,
-  params,
-}) => {
-  // Try to validate a session
-  if (await isUserLoggedIn(request)) {
-    // Return a redirect object
-    const redirectToLogin: RedirectToLogin = {
-      data: "/login",
-      status: HttpStatusCode.MOVED_PERMANENTLY,
-    };
-    return redirectToLogin;
-  }
-
-  // Return a typesafe response object
-  const fooResponse: FooResponse = {
-    data: fooData,
-    status: HttpStatusCode.OK,
-  };
-  return fooResponse;
+const strongAction: StrongAction<
+  FooResponse,
+  BarResponse,
+  RedirectToLogin
+> = async () => {
+  // ... Same as the loader
 };
 ```
 
