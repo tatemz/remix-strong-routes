@@ -4,8 +4,8 @@ import { StrongResponse, PickDataAndStatus } from "./types";
 
 export const useStrongLoaderData = <
   T extends StrongResponse<unknown, HttpStatusCode>
->(): PickDataAndStatus<T> => useLoaderData() as unknown as PickDataAndStatus<T>;
+>(): PickDataAndStatus<T> => useLoaderData() as PickDataAndStatus<T>;
 
 export const useStrongRouteError = <
   T extends StrongResponse<unknown, HttpStatusCode>
->(): PickDataAndStatus<T> => useRouteError() as unknown as PickDataAndStatus<T>;
+>(): PickDataAndStatus<T> => useRouteError() as PickDataAndStatus<T>;

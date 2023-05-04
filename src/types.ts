@@ -33,17 +33,6 @@ export type PickDataAndStatus<T> = T extends StrongResponse<
   ? { data: T["data"]; status: T["status"] }
   : never; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-type StrongResponseData<T> = T extends StrongResponse<infer D, HttpStatusCode>
-  ? D
-  : never;
-
-type StrongResponseStatus<T> = T extends StrongResponse<
-  StrongResponseData<T>,
-  infer S
->
-  ? S
-  : never;
-
 export type StrongLoader<
   Success extends StrongResponse<unknown, NonRedirectStatus>,
   Failure extends StrongResponse<unknown, NonRedirectStatus>,

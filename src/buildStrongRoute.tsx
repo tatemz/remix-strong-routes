@@ -80,6 +80,7 @@ export const buildStrongRoute = <
 
   if (ErrorBoundary) {
     output["ErrorBoundary"] = () => {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const data = useStrongRouteError<LoaderFailure>();
       return createElement(ErrorBoundary, data as any);
     };
