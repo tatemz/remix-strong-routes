@@ -145,15 +145,15 @@ import { buildStrongRoute } from "remix-strong-routes";
 const route = buildStrongRoute<LoaderResponse>({
   loader: strongLoader,
   action: strongAction,
-  loaderSuccess: strongComponent,
-  loaderFailure: strongErrorBoundary,
+  Component: strongComponent,
+  ErrorBoundary: strongErrorBoundary,
 });
 
 // Export parts
 export const action = route.action;
 export const loader = route.loader;
 export const ErrorBoundary = route.ErrorBoundary;
-export default route.default;
+export default route.Component;
 ```
 
 ## Contributing
