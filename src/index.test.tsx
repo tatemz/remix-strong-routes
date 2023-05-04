@@ -267,7 +267,7 @@ describe("buildStrongRoute", () => {
         >
           {
           "status": 500,
-          "statusText": "Internal Server Error",
+          "statusText": "",
           "internal": false,
           "data": {
             "status": 500,
