@@ -1,25 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  ActionFunction,
+  DataFunctionArgs,
+  LoaderFunction,
+} from "@remix-run/server-runtime";
 import { unstable_createRemixStub } from "@remix-run/testing";
 import { render } from "@testing-library/react";
 import "isomorphic-fetch";
+import { ComponentType } from "react";
 import { describe, expect, it } from "vitest";
-import { HttpStatusCode } from "./HttpStatusCode";
-import { buildStrongRoute } from "./buildStrongRoute";
-import { strongResponse } from "./strongResponse";
 import {
+  HttpStatusCode,
   StrongAction,
   StrongComponent,
   StrongErrorBoundary,
   StrongLoader,
   StrongRedirect,
   StrongResponse,
-} from "./types";
-import {
-  ActionFunction,
-  DataFunctionArgs,
-  LoaderFunction,
-} from "@remix-run/server-runtime";
-import { ComponentType } from "react";
+  buildStrongRoute,
+} from "./";
+import { strongResponse } from "./strongResponse";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
