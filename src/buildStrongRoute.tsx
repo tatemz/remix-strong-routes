@@ -1,10 +1,6 @@
 import { redirect } from "@remix-run/server-runtime";
 import { createElement } from "react";
-import {
-  HttpStatusCode,
-  NonRedirectStatus,
-  RedirectStatus,
-} from "./HttpStatusCode";
+import { NonRedirectStatus, RedirectStatus } from "./HttpStatusCode";
 import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { strongResponse } from "./strongResponse";
 import {
@@ -19,6 +15,7 @@ export const buildStrongRoute = <
   LoaderFailure extends StrongResponse<unknown, NonRedirectStatus>,
   LoaderRedirect extends StrongResponse<string, RedirectStatus>,
   ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
+  ActionFailure extends StrongResponse<unknown, NonRedirectStatus>,
   ActionRedirect extends StrongResponse<string, RedirectStatus>
 >(
   opts: BuildStrongRemixRouteExportsOpts<
@@ -26,6 +23,7 @@ export const buildStrongRoute = <
     LoaderFailure,
     LoaderRedirect,
     ActionSuccess,
+    ActionFailure,
     ActionRedirect
   >
 ): StrongRemixRouteExports<typeof opts> => {
@@ -53,20 +51,19 @@ export const buildStrongRoute = <
 
   if (action) {
     const isActionRedirect = (
-      raw: ActionRedirect | ActionSuccess
-    ): raw is ActionRedirect =>
-      raw.status >= HttpStatusCode.MULTIPLE_CHOICES &&
-      raw.status <= HttpStatusCode.PERMANENT_REDIRECT;
+      raw: ActionRedirect | Errorable<ActionSuccess, ActionFailure>
+    ): raw is ActionRedirect => !Array.isArray(raw);
 
     output["action"] = async (args) => {
-      const response = await action(args);
+      const result = await action(args);
 
-      if (isActionRedirect(response)) {
-        const { data, ...init } = response;
+      if (isActionRedirect(result)) {
+        const { data, ...init } = result;
         return redirect(data, init as ResponseInit);
       }
-
-      return strongResponse(response);
+      const [response, err] = result;
+      if (err) throw strongResponse(err);
+      return strongResponse(response as ActionSuccess);
     };
   }
 

@@ -45,10 +45,9 @@ export type StrongLoader<
 
 export type StrongAction<
   Success extends StrongResponse<unknown, NonRedirectStatus>,
+  Failure extends StrongResponse<unknown, NonRedirectStatus>,
   Redirect extends StrongResponse<string, RedirectStatus> = never
-> = (
-  args: DataFunctionArgs
-) => [Redirect] extends never ? Promise<Success> : Promise<Redirect | Success>;
+> = StrongLoader<Success, Failure, Redirect>;
 
 export type StrongComponent<Success> = ComponentType<
   PickDataAndStatus<Success>
@@ -64,12 +63,13 @@ export type BuildStrongRemixRouteExportsOpts<
   LoaderFailure extends StrongResponse<unknown, NonRedirectStatus>,
   LoaderRedirect extends StrongResponse<string, RedirectStatus>,
   ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
+  ActionFailure extends StrongResponse<unknown, NonRedirectStatus>,
   ActionRedirect extends StrongResponse<string, RedirectStatus>
 > = {
   Component?: StrongComponent<LoaderSuccess>;
-  ErrorBoundary?: StrongErrorBoundary<LoaderFailure>;
+  ErrorBoundary?: StrongErrorBoundary<LoaderFailure | ActionFailure>;
   loader?: StrongLoader<LoaderSuccess, LoaderFailure, LoaderRedirect>;
-  action?: StrongAction<ActionSuccess, ActionRedirect>;
+  action?: StrongAction<ActionSuccess, ActionFailure, ActionRedirect>;
   meta?: MetaFunction;
 };
 

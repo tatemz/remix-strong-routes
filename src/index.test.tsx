@@ -4,7 +4,7 @@ import {
   LoaderFunction,
 } from "@remix-run/server-runtime";
 import { unstable_createRemixStub } from "@remix-run/testing";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import "isomorphic-fetch";
 import { ComponentType } from "react";
 import { describe, expect, it } from "vitest";
@@ -19,6 +19,7 @@ import {
   buildStrongRoute,
 } from "./";
 import { strongResponse } from "./strongResponse";
+import { Form } from "@remix-run/react";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -96,19 +97,32 @@ describe("buildStrongRoute", () => {
     return redirectResponse;
   };
 
-  const action: StrongAction<FooResponse, RedirectResponse> = async ({
-    request,
-  }) => {
+  const action: StrongAction<
+    FooResponse,
+    BarResponse,
+    RedirectResponse
+  > = async ({ request }) => {
     const url = new URL(request.url);
+    if (url.pathname === "/bar") {
+      return [null, barResponse];
+    }
+
     if (url.pathname === "/foo") {
-      return fooResponse;
+      return [fooResponse, null];
     }
 
     return redirectResponse;
   };
 
   const Component: StrongComponent<FooResponse> = (props) => {
-    return <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>;
+    return (
+      <>
+        <Form method="post" data-testid="form">
+          <button type="submit">Go</button>
+        </Form>
+        <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>;
+      </>
+    );
   };
 
   const ErrorBoundary: StrongErrorBoundary<BarResponse> = (props) => {
@@ -187,6 +201,25 @@ describe("buildStrongRoute", () => {
           request,
         } as DataFunctionArgs);
         const expected = strongResponse(fooResponse);
+        const expectedBody = await expected.json();
+
+        expect(result.status).toStrictEqual(expected.status);
+        expect(result.statusText).toStrictEqual(expected.statusText);
+        expect(result.headers).toStrictEqual(expected.headers);
+        await expect(result.json()).resolves.toStrictEqual(expectedBody);
+      });
+    });
+
+    describe("when the action fails", () => {
+      it("should throw a strongResponse using the error tuple", async () => {
+        const request = new Request("http://test.com/bar");
+        const result: Response = await new Promise((resolve, reject) => {
+          (route.action as ActionFunction)({ request } as DataFunctionArgs)
+            .then(reject)
+            .catch(resolve);
+        });
+
+        const expected = strongResponse(barResponse);
         const expectedBody = await expected.json();
 
         expect(result.status).toStrictEqual(expected.status);
@@ -275,6 +308,50 @@ describe("buildStrongRoute", () => {
           }
         }
         </pre>
+      `);
+    });
+
+    // TODO - Learn how remix actions handle failure
+    it.skip("should render error boundary for failed actions", async () => {
+      const TestComponent = route.Component as ComponentType;
+      const TestErrorBoundary = route.ErrorBoundary as ComponentType;
+      const RemixStub = unstable_createRemixStub([
+        {
+          path: "/foo",
+          index: true,
+          element: <TestComponent />,
+          errorElement: <TestErrorBoundary />,
+          hasErrorBoundary: true,
+          loader: () => null,
+          action: route.action as any,
+        },
+      ]);
+
+      const { container, findByTestId } = render(
+        <RemixStub initialEntries={["/foo"]} />
+      );
+      const element = (await findByTestId("form")) as HTMLFormElement;
+      act(() => element.submit());
+      expect(container).toMatchInlineSnapshot(`
+        <div>
+          <form
+            action="/foo?index"
+            data-testid="form"
+            method="post"
+          >
+            <button
+              type="submit"
+            >
+              Go
+            </button>
+          </form>
+          <pre
+            data-testid="success"
+          >
+            {}
+          </pre>
+          ;
+        </div>
       `);
     });
   });
