@@ -1,18 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import "isomorphic-fetch";
-import React from "react";
 import { unstable_createRemixStub } from "@remix-run/testing";
 import { render } from "@testing-library/react";
+import "isomorphic-fetch";
 import { describe, expect, it } from "vitest";
 import { HttpStatusCode } from "./HttpStatusCode";
 import { buildStrongRoute } from "./buildStrongRoute";
 import { strongResponse } from "./strongResponse";
 import {
-  StrongResponse,
-  StrongErrorable,
-  StrongErrorBoundary,
+  StrongAction,
   StrongComponent,
+  StrongErrorBoundary,
+  StrongLoader,
+  StrongRedirect,
+  StrongResponse,
 } from "./types";
+import {
+  ActionFunction,
+  DataFunctionArgs,
+  LoaderFunction,
+} from "@remix-run/server-runtime";
+import { ComponentType } from "react";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -50,60 +57,80 @@ describe("strongResponse", () => {
 
 describe("buildStrongRoute", () => {
   type FooResponse = StrongResponse<"Foo", HttpStatusCode.OK>;
+
   type BarResponse = StrongResponse<
     "Bar",
     HttpStatusCode.INTERNAL_SERVER_ERROR
   >;
 
-  type LoaderSuccessResponse = FooResponse;
-  type LoaderFailureResponse = BarResponse;
+  type RedirectResponse = StrongRedirect<"/", HttpStatusCode.MOVED_PERMANENTLY>;
 
-  type LoaderResponse = StrongErrorable<
-    LoaderSuccessResponse,
-    LoaderFailureResponse
-  >;
-
-  const successResponse: LoaderSuccessResponse = {
+  const fooResponse: FooResponse = {
     data: "Foo",
     status: HttpStatusCode.OK,
   };
 
-  const failureResponse: LoaderFailureResponse = {
+  const barResponse: BarResponse = {
     data: "Bar",
     status: HttpStatusCode.INTERNAL_SERVER_ERROR,
   };
 
-  const loaderSuccess: StrongComponent<LoaderSuccessResponse> = (props) => {
+  const redirectResponse: RedirectResponse = {
+    data: "/",
+    status: HttpStatusCode.MOVED_PERMANENTLY,
+  };
+
+  const loader: StrongLoader<
+    FooResponse,
+    BarResponse,
+    RedirectResponse
+  > = async ({ request }) => {
+    const url = new URL(request.url);
+    if (url.pathname === "/bar") {
+      return [null, barResponse];
+    }
+
+    if (url.pathname === "/foo") {
+      return [fooResponse, null];
+    }
+
+    return redirectResponse;
+  };
+
+  const action: StrongAction<FooResponse, RedirectResponse> = async ({
+    request,
+  }) => {
+    const url = new URL(request.url);
+    if (url.pathname === "/foo") {
+      return fooResponse;
+    }
+
+    return redirectResponse;
+  };
+
+  const Component: StrongComponent<FooResponse> = (props) => {
     return <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>;
   };
 
-  const loaderFailure: StrongErrorBoundary<LoaderFailureResponse> = (props) => {
+  const ErrorBoundary: StrongErrorBoundary<BarResponse> = (props) => {
     return <pre data-testid="failure">{JSON.stringify(props, null, 2)}</pre>;
   };
 
-  const successLoaderRoute = buildStrongRoute<LoaderResponse>({
-    loader: async () => {
-      return [successResponse, null];
-    },
-    action: undefined,
-    loaderSuccess,
-    loaderFailure,
-  });
-
-  const failureLoaderRoute = buildStrongRoute<LoaderResponse>({
-    loader: async () => {
-      return [null, failureResponse];
-    },
-    action: undefined,
-    loaderSuccess,
-    loaderFailure,
+  const route = buildStrongRoute({
+    Component,
+    ErrorBoundary,
+    loader,
+    action,
   });
 
   describe("loader", () => {
     describe("when the loader succeeds", () => {
       it("should return a strongResponse using the error tuple", async () => {
-        const result = await successLoaderRoute.loader({} as any);
-        const expected = strongResponse(successResponse);
+        const request = new Request("http://test.com/foo");
+        const result = await (route.loader as LoaderFunction)({
+          request,
+        } as DataFunctionArgs);
+        const expected = strongResponse(fooResponse);
         const expectedBody = await expected.json();
 
         expect(result.status).toStrictEqual(expected.status);
@@ -115,13 +142,14 @@ describe("buildStrongRoute", () => {
 
     describe("when the loader fails", () => {
       it("should throw a strongResponse using the error tuple", async () => {
+        const request = new Request("http://test.com/bar");
         const result: Response = await new Promise((resolve, reject) => {
-          failureLoaderRoute
-            .loader({} as any)
+          (route.loader as LoaderFunction)({ request } as DataFunctionArgs)
             .then(reject)
             .catch(resolve);
         });
-        const expected = strongResponse(failureResponse);
+
+        const expected = strongResponse(barResponse);
         const expectedBody = await expected.json();
 
         expect(result.status).toStrictEqual(expected.status);
@@ -130,20 +158,79 @@ describe("buildStrongRoute", () => {
         await expect(result.json()).resolves.toStrictEqual(expectedBody);
       });
     });
+
+    describe("when the loader redirects", () => {
+      it("should return a redirect response", async () => {
+        const request = new Request("http://test.com/");
+        const result = await (route.loader as LoaderFunction)({
+          request,
+        } as DataFunctionArgs);
+
+        const expected = new Response(null, {
+          status: redirectResponse.status,
+          headers: new Headers({
+            Location: "/",
+          }),
+        });
+
+        expect(result.status).toStrictEqual(expected.status);
+        expect(result.statusText).toStrictEqual(expected.statusText);
+        expect(result.headers).toStrictEqual(expected.headers);
+      });
+    });
   });
 
-  describe("loaderSuccess", () => {
+  describe("action", () => {
+    describe("when the action succeeds", () => {
+      it("should return a strongResponse using the error tuple", async () => {
+        const request = new Request("http://test.com/foo");
+        const result = await (route.action as ActionFunction)({
+          request,
+        } as DataFunctionArgs);
+        const expected = strongResponse(fooResponse);
+        const expectedBody = await expected.json();
+
+        expect(result.status).toStrictEqual(expected.status);
+        expect(result.statusText).toStrictEqual(expected.statusText);
+        expect(result.headers).toStrictEqual(expected.headers);
+        await expect(result.json()).resolves.toStrictEqual(expectedBody);
+      });
+    });
+
+    describe("when the action redirects", () => {
+      it("should return a redirect response", async () => {
+        const request = new Request("http://test.com/");
+        const result = await (route.action as ActionFunction)({
+          request,
+        } as DataFunctionArgs);
+
+        const expected = new Response(null, {
+          status: redirectResponse.status,
+          headers: new Headers({
+            Location: "/",
+          }),
+        });
+
+        expect(result.status).toStrictEqual(expected.status);
+        expect(result.statusText).toStrictEqual(expected.statusText);
+        expect(result.headers).toStrictEqual(expected.headers);
+      });
+    });
+  });
+
+  describe("Component", () => {
     it("should load and render strongly typed data", async () => {
+      const TestComponent = route.Component as ComponentType;
       const RemixStub = unstable_createRemixStub([
         {
-          path: "/",
+          path: "/foo",
           index: true,
-          element: <successLoaderRoute.default />,
-          loader: successLoaderRoute.loader as any,
+          element: <TestComponent />,
+          loader: route.loader as any,
         },
       ]);
 
-      const { findByTestId } = render(<RemixStub />);
+      const { findByTestId } = render(<RemixStub initialEntries={["/foo"]} />);
       const element = await findByTestId("success");
       expect(element).toMatchInlineSnapshot(`
         <pre
@@ -158,24 +245,22 @@ describe("buildStrongRoute", () => {
     });
   });
 
-  describe("loaderFailure", () => {
+  describe("ErrorBoundary", () => {
     it("should load and render strongly typed data for error boundaries", async () => {
+      const TestComponent = route.Component as ComponentType;
+      const TestErrorBoundary = route.ErrorBoundary as ComponentType;
       const RemixStub = unstable_createRemixStub([
         {
-          path: "/",
+          path: "/bar",
           index: true,
-          element: <failureLoaderRoute.default />,
-          errorElement: failureLoaderRoute.ErrorBoundary ? (
-            <failureLoaderRoute.ErrorBoundary />
-          ) : (
-            <></>
-          ),
+          element: <TestComponent />,
+          errorElement: <TestErrorBoundary />,
           hasErrorBoundary: true,
-          loader: failureLoaderRoute.loader as any,
+          loader: route.loader as any,
         },
       ]);
 
-      const { findByTestId } = render(<RemixStub />);
+      const { findByTestId } = render(<RemixStub initialEntries={["/bar"]} />);
       const element = await findByTestId("failure");
       expect(element).toMatchInlineSnapshot(`
         <pre
@@ -183,7 +268,7 @@ describe("buildStrongRoute", () => {
         >
           {
           "status": 500,
-          "statusText": "",
+          "statusText": "Internal Server Error",
           "internal": false,
           "data": {
             "status": 500,

@@ -376,3 +376,16 @@ export enum HttpStatusCode {
    */
   NETWORK_AUTHENTICATION_REQUIRED = 511,
 }
+
+export type RedirectStatus =
+  | HttpStatusCode.MULTIPLE_CHOICES
+  | HttpStatusCode.MOVED_PERMANENTLY
+  | HttpStatusCode.FOUND
+  | HttpStatusCode.SEE_OTHER
+  | HttpStatusCode.NOT_MODIFIED
+  | HttpStatusCode.USE_PROXY
+  | HttpStatusCode.SWITCH_PROXY
+  | HttpStatusCode.TEMPORARY_REDIRECT
+  | HttpStatusCode.PERMANENT_REDIRECT;
+
+export type NonRedirectStatus = Exclude<HttpStatusCode, RedirectStatus>;

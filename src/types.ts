@@ -1,5 +1,4 @@
 import { V2_ErrorBoundaryComponent } from "@remix-run/react/dist/routeModules";
-import { HttpStatusCode } from "./HttpStatusCode";
 import {
   ActionFunction,
   DataFunctionArgs,
@@ -7,6 +6,14 @@ import {
   MetaFunction,
   RouteComponent,
 } from "@remix-run/server-runtime";
+import { ComponentType } from "react";
+import {
+  HttpStatusCode,
+  NonRedirectStatus,
+  RedirectStatus,
+} from "./HttpStatusCode";
+
+export type Errorable<T, E> = readonly [T, null] | readonly [null, E];
 
 export interface StrongResponse<T, S extends HttpStatusCode>
   extends ResponseInit {
@@ -14,71 +21,77 @@ export interface StrongResponse<T, S extends HttpStatusCode>
   status: S;
 }
 
-export type PickDataAndStatus<
-  T extends StrongResponse<unknown, HttpStatusCode>
-> = T extends any ? { data: T["data"]; status: T["status"] } : never; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type StrongRedirect<
+  T extends string,
+  S extends RedirectStatus
+> = StrongResponse<T, S>;
 
-type Errorable<T, E> = [T, null] | [null, E];
+export type PickDataAndStatus<T> = T extends StrongResponse<
+  unknown,
+  HttpStatusCode
+>
+  ? { data: T["data"]; status: T["status"] }
+  : never; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-export type StrongErrorable<
-  T extends StrongResponse<unknown, HttpStatusCode>,
-  E extends StrongResponse<unknown, HttpStatusCode>
-> = [E] extends [never] ? [T, null] : Errorable<T, E>;
+type StrongResponseData<T> = T extends StrongResponse<infer D, HttpStatusCode>
+  ? D
+  : never;
 
-export type RouteErrorableSuccess<
-  T extends StrongErrorable<
-    StrongResponse<unknown, HttpStatusCode>,
-    StrongResponse<unknown, HttpStatusCode> | never
-  >
-> = Exclude<T[0], null>;
-
-export type RouteErrorableFailure<
-  T extends StrongErrorable<
-    StrongResponse<unknown, HttpStatusCode>,
-    StrongResponse<unknown, HttpStatusCode> | never
-  >
-> = Exclude<T[1], null>;
+type StrongResponseStatus<T> = T extends StrongResponse<
+  StrongResponseData<T>,
+  infer S
+>
+  ? S
+  : never;
 
 export type StrongLoader<
-  T extends StrongErrorable<
-    StrongResponse<unknown, HttpStatusCode>,
-    StrongResponse<unknown, HttpStatusCode> | never
-  >
-> = (args: DataFunctionArgs) => Promise<T>;
-
-export type StrongAction<T extends StrongResponse<unknown, HttpStatusCode>> = (
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
+  Failure extends StrongResponse<unknown, NonRedirectStatus>,
+  Redirect extends StrongResponse<string, RedirectStatus> = never
+> = (
   args: DataFunctionArgs
-) => Promise<T>;
+) => [Redirect] extends never
+  ? Promise<Errorable<Success, Failure>>
+  : Promise<Redirect | Errorable<Success, Failure>>;
 
-export type StrongComponent<
-  T extends StrongResponse<unknown, HttpStatusCode>,
-  TT extends PickDataAndStatus<T> = PickDataAndStatus<T>
-> = (props: TT) => JSX.Element;
+export type StrongAction<
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
+  Redirect extends StrongResponse<string, RedirectStatus>
+> = (
+  args: DataFunctionArgs
+) => [Redirect] extends never ? Promise<Success> : Promise<Redirect | Success>;
+
+export type StrongComponent<Success> = ComponentType<
+  PickDataAndStatus<Success>
+>;
 
 export type StrongErrorBoundary<
-  T extends StrongResponse<unknown, HttpStatusCode>
-> = (props: PickDataAndStatus<T>) => JSX.Element;
+  Failure extends StrongResponse<unknown, NonRedirectStatus>,
+  Props extends PickDataAndStatus<Failure> = PickDataAndStatus<Failure>
+> = ComponentType<Props>;
 
 export type BuildStrongRemixRouteExportsOpts<
-  LoaderResponse extends StrongErrorable<
-    StrongResponse<unknown, HttpStatusCode>,
-    StrongResponse<unknown, HttpStatusCode> | never
-  >,
-  ActionResponse extends StrongResponse<unknown, HttpStatusCode>
+  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus>,
+  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus>,
+  LoaderRedirect extends StrongResponse<string, RedirectStatus>,
+  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
+  ActionRedirect extends StrongResponse<string, RedirectStatus>
 > = {
-  loaderSuccess: StrongComponent<RouteErrorableSuccess<LoaderResponse>>;
-  loaderFailure: StrongErrorBoundary<RouteErrorableFailure<LoaderResponse>>;
-  action: [ActionResponse] extends [never]
-    ? undefined
-    : StrongAction<ActionResponse>;
-  loader: StrongLoader<LoaderResponse>;
+  Component?: StrongComponent<LoaderSuccess>;
+  ErrorBoundary?: StrongErrorBoundary<LoaderFailure>;
+  loader?: StrongLoader<LoaderSuccess, LoaderFailure, LoaderRedirect>;
+  action?: StrongAction<ActionSuccess, ActionRedirect>;
   meta?: MetaFunction;
 };
 
-export type StrongRemixRouteExports = {
-  default: RouteComponent;
-  action: ActionFunction | undefined;
-  loader: LoaderFunction;
-  meta: MetaFunction | undefined;
-  ErrorBoundary: V2_ErrorBoundaryComponent | undefined;
+export type StrongRemixRouteExports<T> = {
+  [K in keyof T]: K extends "loader"
+    ? LoaderFunction
+    : K extends "action"
+    ? ActionFunction
+    : K extends "Component"
+    ? RouteComponent
+    : K extends "ErrorBoundary"
+    ? V2_ErrorBoundaryComponent
+    : never;
 };

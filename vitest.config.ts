@@ -3,6 +3,7 @@ import GithubActionsReporter from "vitest-github-actions-reporter";
 
 export default defineConfig({
   test: {
+    include: ["./src/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     coverage: {
       reporter: ["json-summary", "json", "text"],

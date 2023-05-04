@@ -15,18 +15,18 @@ npm install remix-strong-routes
 ```ts
 import {
   StrongResponse,
+  StrongRedirect,
   HttpStatusCode,
-  StrongErrorable,
 } from "remix-strong-routes";
 
-// Define a success response type
-type FooResponse = StrongResponse<"foo", HttpStatusCode.OK>;
+type FooResponse = StrongResponse<"Foo", HttpStatusCode.OK>;
 
-// Define an error response type
-type BarResponse = StrongResponse<"foo", HttpStatusCode.INTERNAL_SERVER_ERROR>;
+type BarResponse = StrongResponse<"Bar", HttpStatusCode.INTERNAL_SERVER_ERROR>;
 
-// Define a loader response union
-type LoaderResponse = LoaderErrorable<FooResponse, BarResponse>;
+type RedirectToLogin = StrongRedirect<
+  "/login",
+  HttpStatusCode.MOVED_PERMANENTLY
+>;
 ```
 
 ### Define Loader
@@ -34,11 +34,21 @@ type LoaderResponse = LoaderErrorable<FooResponse, BarResponse>;
 ```ts
 import { StrongLoader } from "remix-strong-routes";
 
-const strongLoader: StrongLoader<LoaderResponse> = async ({
-  context,
-  request,
-  params,
-}) => {
+const strongLoader: StrongLoader<
+  FooResponse,
+  BarResponse,
+  RedirectToLogin
+> = async ({ context, request, params }) => {
+  // Try to validate a session
+  if (await isUserLoggedIn(request)) {
+    // Return a redirect object
+    const redirectToLogin: RedirectToLogin = {
+      data: "/login",
+      status: HttpStatusCode.MOVED_PERMANENTLY,
+    };
+    return redirectToLogin;
+  }
+
   try {
     // Try to load some data
     const fooData = await getFooData();
@@ -52,18 +62,44 @@ const strongLoader: StrongLoader<LoaderResponse> = async ({
     // Return a type safe error tuple indicating success
     return [fooResponse, null];
   } catch (e) {
-    // Build error data
-    const barData = "bar" as const;
-
     // Build a typesafe response object
     const barResponse: BarResponse = {
-      data: barData,
+      data: "Bar",
       status: HttpStatusCode.INTERNAL_SERVER_ERROR,
     };
 
     // Return a type safe error tuple indicating failure
     return [null, barData];
   }
+};
+```
+
+### Define Action
+
+```ts
+import { StrongAction } from "remix-strong-routes";
+
+const strongAction: StrongAction<FooResponse, RedirectToLogin> = async ({
+  context,
+  request,
+  params,
+}) => {
+  // Try to validate a session
+  if (await isUserLoggedIn(request)) {
+    // Return a redirect object
+    const redirectToLogin: RedirectToLogin = {
+      data: "/login",
+      status: HttpStatusCode.MOVED_PERMANENTLY,
+    };
+    return redirectToLogin;
+  }
+
+  // Return a typesafe response object
+  const fooResponse: FooResponse = {
+    data: fooData,
+    status: HttpStatusCode.OK,
+  };
+  return fooResponse;
 };
 ```
 
@@ -108,7 +144,7 @@ import { buildStrongRoute } from "remix-strong-routes";
 // Build strongly typed route exports
 const route = buildStrongRoute<LoaderResponse>({
   loader: strongLoader,
-  action: undefined,
+  action: strongAction,
   loaderSuccess: strongComponent,
   loaderFailure: strongErrorBoundary,
 });
