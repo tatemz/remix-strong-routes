@@ -45,7 +45,7 @@ export type StrongLoader<
 
 export type StrongAction<
   Success extends StrongResponse<unknown, NonRedirectStatus>,
-  Redirect extends StrongResponse<string, RedirectStatus>
+  Redirect extends StrongResponse<string, RedirectStatus> = never
 > = (
   args: DataFunctionArgs
 ) => [Redirect] extends never ? Promise<Success> : Promise<Redirect | Success>;
