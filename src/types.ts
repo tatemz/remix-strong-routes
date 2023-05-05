@@ -59,15 +59,17 @@ export type StrongErrorBoundary<
 > = ComponentType<Props>;
 
 export type BuildStrongRemixRouteExportsOpts<
-  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus>,
-  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus>,
-  LoaderRedirect extends StrongResponse<string, RedirectStatus>,
-  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
-  ActionFailure extends StrongResponse<unknown, NonRedirectStatus>,
-  ActionRedirect extends StrongResponse<string, RedirectStatus>
+  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderRedirect extends StrongResponse<string, RedirectStatus> = never,
+  ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionRedirect extends StrongResponse<string, RedirectStatus> = never
 > = {
-  Component?: StrongComponent<LoaderSuccess>;
-  ErrorBoundary?: StrongErrorBoundary<LoaderFailure | ActionFailure>;
+  Component?: StrongComponent<Exclude<LoaderSuccess, never>>;
+  ErrorBoundary?: StrongErrorBoundary<
+    Exclude<LoaderFailure | ActionFailure, never>
+  >;
   loader?: StrongLoader<LoaderSuccess, LoaderFailure, LoaderRedirect>;
   action?: StrongAction<ActionSuccess, ActionFailure, ActionRedirect>;
   meta?: MetaFunction;

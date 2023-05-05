@@ -12,17 +12,17 @@ import {
 
 export const buildStrongRoute = <
   LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus>,
-  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus>,
-  LoaderRedirect extends StrongResponse<string, RedirectStatus>,
   ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
-  ActionFailure extends StrongResponse<unknown, NonRedirectStatus>,
-  ActionRedirect extends StrongResponse<string, RedirectStatus>
+  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderRedirect extends StrongResponse<string, RedirectStatus> = never,
+  ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionRedirect extends StrongResponse<string, RedirectStatus> = never
 >(
   opts: BuildStrongRemixRouteExportsOpts<
     LoaderSuccess,
+    ActionSuccess,
     LoaderFailure,
     LoaderRedirect,
-    ActionSuccess,
     ActionFailure,
     ActionRedirect
   >

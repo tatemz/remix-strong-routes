@@ -136,6 +136,26 @@ describe("buildStrongRoute", () => {
     action,
   });
 
+  // TODO - add test cases for routeWithoutAction
+  buildStrongRoute({
+    Component,
+    ErrorBoundary,
+    loader,
+  });
+
+  // TODO - add test cases for routeWithoutLoaderOrAction
+  buildStrongRoute({
+    Component: () => <></>,
+    ErrorBoundary: () => <></>,
+  });
+
+  // TODO - add test cases for routeWithoutLoader
+  buildStrongRoute({
+    Component,
+    ErrorBoundary,
+    loader,
+  });
+
   describe("loader", () => {
     describe("when the loader succeeds", () => {
       it("should return a strongResponse using the error tuple", async () => {
