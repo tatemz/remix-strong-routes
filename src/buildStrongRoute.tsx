@@ -11,8 +11,8 @@ import {
 } from "./types";
 
 export const buildStrongRoute = <
-  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus>,
-  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus>,
+  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
   LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   LoaderRedirect extends StrongResponse<string, RedirectStatus> = never,
   ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
