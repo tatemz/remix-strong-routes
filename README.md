@@ -2,6 +2,23 @@
 
 > Worry-free Remix routes with Typescript 💪
 
+## Table of Contents
+
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+  - [A note about the `Errorable` type](#a-note-about-the--errorable--type)
+  - [Returning Data inside `loader` and `action`](#returning-data-inside--loader--and--action-)
+  - [Uncaught Errors](#uncaught-errors)
+  - [Define Types](#define-types)
+  - [Define Loader](#define-loader)
+  - [Define Action](#define-action)
+  - [Define Route Component](#define-route-component)
+  - [Define Error Boundary](#define-error-boundary)
+  - [Configure & Export Route](#configure---export-route)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Background
 
 Remix loaders and actions have generally good typescript support, but this project aims to ensure the data types passed around Remix routes are strongly typed. There are three things that can happen in a Remix `loader` or `action`:
