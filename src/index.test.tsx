@@ -20,6 +20,7 @@ import {
 } from "./";
 import { strongResponse } from "./strongResponse";
 import { Form } from "@remix-run/react";
+import { toError, toSuccess } from "./errorable";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -84,14 +85,18 @@ describe("buildStrongRoute", () => {
     FooResponse,
     BarResponse,
     RedirectResponse
-  > = async ({ request }) => {
+  > = async (
+    { request },
+    toComponent = toSuccess,
+    toErrorBoundary = toError
+  ) => {
     const url = new URL(request.url);
     if (url.pathname === "/bar") {
-      return [null, barResponse];
+      return toErrorBoundary(barResponse);
     }
 
     if (url.pathname === "/foo") {
-      return [fooResponse, null];
+      return toComponent(fooResponse);
     }
 
     return redirectResponse;
@@ -101,14 +106,18 @@ describe("buildStrongRoute", () => {
     FooResponse,
     BarResponse,
     RedirectResponse
-  > = async ({ request }) => {
+  > = async (
+    { request },
+    toComponent = toSuccess,
+    toErrorBoundary = toError
+  ) => {
     const url = new URL(request.url);
     if (url.pathname === "/bar") {
-      return [null, barResponse];
+      return toErrorBoundary(barResponse);
     }
 
     if (url.pathname === "/foo") {
-      return [fooResponse, null];
+      return toComponent(fooResponse);
     }
 
     return redirectResponse;

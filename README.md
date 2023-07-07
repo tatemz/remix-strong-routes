@@ -32,13 +32,22 @@ type RedirectToLogin = StrongRedirect<
 ### Define Loader
 
 ```ts
-import { StrongLoader } from "remix-strong-routes";
+import { StrongLoader, toSuccess, toError } from "remix-strong-routes";
 
 const strongLoader: StrongLoader<
   FooResponse,
   BarResponse,
   RedirectToLogin
-> = async ({ context, request, params }) => {
+> = async (
+  { context, request, params },
+  /**
+   * Defining your success & error handlers in the arguments of the loader or
+   * action strengthens the types, as they can inherit the type arguments of
+   * StrongLoader.
+   */
+  toComponent = toSuccess,
+  toErrorBoundary = toError
+) => {
   // Try to validate a session
   if (await isUserLoggedIn(request)) {
     // Return a redirect object
@@ -60,7 +69,7 @@ const strongLoader: StrongLoader<
     };
 
     // Return a type safe error tuple indicating success
-    return [fooResponse, null];
+    return toComponent(fooResponse);
   } catch (e) {
     // Build a typesafe response object
     const barResponse: BarResponse = {
@@ -69,7 +78,7 @@ const strongLoader: StrongLoader<
     };
 
     // Return a type safe error tuple indicating failure
-    return [null, barData];
+    return toErrorBoundary(barResponse);
   }
 };
 ```
