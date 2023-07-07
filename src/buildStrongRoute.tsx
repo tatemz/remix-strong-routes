@@ -5,10 +5,10 @@ import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { strongResponse } from "./strongResponse";
 import {
   BuildStrongRemixRouteExportsOpts,
-  Errorable,
   StrongRemixRouteExports,
   StrongResponse,
 } from "./types";
+import { Errorable } from "./errorable";
 
 export const buildStrongRoute = <
   LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
