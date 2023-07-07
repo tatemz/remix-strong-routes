@@ -12,8 +12,7 @@ import {
   NonRedirectStatus,
   RedirectStatus,
 } from "./HttpStatusCode";
-
-export type Errorable<T, E> = readonly [T, null] | readonly [null, E];
+import { Errorable, ToErrorFn, ToSuccessFn } from "./errorable";
 
 export interface StrongResponse<T, S extends HttpStatusCode>
   extends ResponseInit {
@@ -38,7 +37,9 @@ export type StrongLoader<
   Failure extends StrongResponse<unknown, NonRedirectStatus>,
   Redirect extends StrongResponse<string, RedirectStatus> = never
 > = (
-  args: DataFunctionArgs
+  args: DataFunctionArgs,
+  toComponent?: ToSuccessFn<Success, Failure>,
+  toErrorBoundary?: ToErrorFn<Success, Failure>
 ) => [Redirect] extends never
   ? Promise<Errorable<Success, Failure>>
   : Promise<Redirect | Errorable<Success, Failure>>;
