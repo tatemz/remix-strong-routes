@@ -27,7 +27,7 @@ Remix loaders and actions have generally good typescript support, but this proje
 - Failure
 - Redirects
 
-This library is relatively exposes a tiny `buildStrongRoute` function that adds a small amount of validation logic to Remix's default routing behavior. The good part about this library, is that you do not have to use `buildStrongRoute` everywhere - you can opt in or out of its behavior per route.
+This library exposes a tiny `buildStrongRoute` function that adds a small amount of validation logic to Remix's default routing behavior. The good part about this library, is that you do not have to use `buildStrongRoute` everywhere - you can opt in or out of its behavior per route.
 
 ## Install
 
