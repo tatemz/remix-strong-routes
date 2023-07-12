@@ -12,7 +12,7 @@ import {
   NonRedirectStatus,
   RedirectStatus,
 } from "./HttpStatusCode";
-import { Errorable, ToErrorFn, ToSuccessFn } from "./errorable";
+import * as E from "fp-ts/Either";
 
 export interface StrongResponse<T, S extends HttpStatusCode>
   extends ResponseInit {
@@ -33,22 +33,22 @@ export type PickDataAndStatus<T> = T extends StrongResponse<
   : never; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export type StrongLoader<
-  Success extends StrongResponse<unknown, NonRedirectStatus>,
   Failure extends StrongResponse<unknown, NonRedirectStatus>,
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
   Redirect extends StrongResponse<string, RedirectStatus> = never
 > = (
   args: DataFunctionArgs,
-  toComponent?: ToSuccessFn<Success, Failure>,
-  toErrorBoundary?: ToErrorFn<Success, Failure>
+  toComponent: <E, A>(a: A) => E.Either<E, A>,
+  toErrorBoundary: <E, A>(e: E) => E.Either<E, A>
 ) => [Redirect] extends never
-  ? Promise<Errorable<Success, Failure>>
-  : Promise<Redirect | Errorable<Success, Failure>>;
+  ? Promise<E.Either<Failure, Success>>
+  : Promise<Redirect | E.Either<Failure, Success>>;
 
 export type StrongAction<
-  Success extends StrongResponse<unknown, NonRedirectStatus>,
   Failure extends StrongResponse<unknown, NonRedirectStatus>,
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
   Redirect extends StrongResponse<string, RedirectStatus> = never
-> = StrongLoader<Success, Failure, Redirect>;
+> = StrongLoader<Failure, Success, Redirect>;
 
 export type StrongComponent<Success> = ComponentType<
   PickDataAndStatus<Success>
@@ -71,8 +71,12 @@ export type BuildStrongRemixRouteExportsOpts<
   ErrorBoundary?: StrongErrorBoundary<
     Exclude<LoaderFailure | ActionFailure, never>
   >;
-  loader?: StrongLoader<LoaderSuccess, LoaderFailure, LoaderRedirect>;
-  action?: StrongAction<ActionSuccess, ActionFailure, ActionRedirect>;
+  loader?: (
+    args: DataFunctionArgs
+  ) => ReturnType<StrongLoader<LoaderFailure, LoaderSuccess, LoaderRedirect>>;
+  action?: (
+    args: DataFunctionArgs
+  ) => ReturnType<StrongAction<ActionFailure, ActionSuccess, ActionRedirect>>;
   meta?: MetaFunction;
 };
 

@@ -10,17 +10,16 @@ import { ComponentType } from "react";
 import { describe, expect, it } from "vitest";
 import {
   HttpStatusCode,
-  StrongAction,
   StrongComponent,
   StrongErrorBoundary,
-  StrongLoader,
   StrongRedirect,
   StrongResponse,
   buildStrongRoute,
 } from "./";
 import { strongResponse } from "./strongResponse";
 import { Form } from "@remix-run/react";
-import { toError, toSuccess } from "./errorable";
+import { strongLoader } from "./strongLoader";
+import { strongAction } from "./strongAction";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -81,47 +80,35 @@ describe("buildStrongRoute", () => {
     status: HttpStatusCode.MOVED_PERMANENTLY,
   };
 
-  const loader: StrongLoader<
-    FooResponse,
-    BarResponse,
-    RedirectResponse
-  > = async (
-    { request },
-    toComponent = toSuccess,
-    toErrorBoundary = toError
-  ) => {
-    const url = new URL(request.url);
-    if (url.pathname === "/bar") {
-      return toErrorBoundary(barResponse);
+  const loader = strongLoader<BarResponse, FooResponse, RedirectResponse>(
+    async ({ request }, toComponent, toErrorBoundary) => {
+      const url = new URL(request.url);
+      if (url.pathname === "/bar") {
+        return toErrorBoundary(barResponse);
+      }
+
+      if (url.pathname === "/foo") {
+        return toComponent(fooResponse);
+      }
+
+      return redirectResponse;
     }
+  );
 
-    if (url.pathname === "/foo") {
-      return toComponent(fooResponse);
+  const action = strongAction<BarResponse, FooResponse, RedirectResponse>(
+    async ({ request }, toComponent, toErrorBoundary) => {
+      const url = new URL(request.url);
+      if (url.pathname === "/bar") {
+        return toErrorBoundary(barResponse);
+      }
+
+      if (url.pathname === "/foo") {
+        return toComponent(fooResponse);
+      }
+
+      return redirectResponse;
     }
-
-    return redirectResponse;
-  };
-
-  const action: StrongAction<
-    FooResponse,
-    BarResponse,
-    RedirectResponse
-  > = async (
-    { request },
-    toComponent = toSuccess,
-    toErrorBoundary = toError
-  ) => {
-    const url = new URL(request.url);
-    if (url.pathname === "/bar") {
-      return toErrorBoundary(barResponse);
-    }
-
-    if (url.pathname === "/foo") {
-      return toComponent(fooResponse);
-    }
-
-    return redirectResponse;
-  };
+  );
 
   const Component: StrongComponent<FooResponse> = (props) => {
     return (
@@ -323,6 +310,7 @@ describe("buildStrongRoute", () => {
 
       const { findByTestId } = render(<RemixStub initialEntries={["/bar"]} />);
       const element = await findByTestId("failure");
+
       expect(element).toMatchInlineSnapshot(`
         <pre
           data-testid="failure"
@@ -360,7 +348,9 @@ describe("buildStrongRoute", () => {
         <RemixStub initialEntries={["/foo"]} />
       );
       const element = (await findByTestId("form")) as HTMLFormElement;
+
       act(() => element.submit());
+
       expect(container).toMatchInlineSnapshot(`
         <div>
           <form

@@ -3,7 +3,9 @@
   "version": "1.3.0",
   "description": "Worry-free Remix routes with Typescript",
   "engines": {
-    "node": ">=14"
+    "node": ">=18.16",
+    "npm": ">=9.5",
+    "yarn": ">=1.22"
   },
   "browser": "./browser/index.js",
   "main": "./build/index.js",
@@ -37,6 +39,9 @@
     "url": "https://github.com/tatemz/remix-strong-routes.git"
   },
   "license": "MIT",
+  "dependencies": {
+    "fp-ts": "2.16.0"
+  },
   "peerDependencies": {
     "@remix-run/react": "^1.15.0 || ^1.16.0 || ^1.17.0",
     "@remix-run/server-runtime": "^1.15.0 || ^1.16.0 || ^1.17.0",

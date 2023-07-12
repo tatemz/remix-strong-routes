@@ -8,4 +8,5 @@ export {
   StrongRedirect,
 } from "./types";
 export { HttpStatusCode } from "./HttpStatusCode";
-export { Errorable, isSuccess, isError, toSuccess, toError } from "./errorable";
+export { strongLoader } from "./strongLoader";
+export { strongAction } from "./strongAction";
