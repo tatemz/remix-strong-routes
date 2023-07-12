@@ -310,6 +310,7 @@ describe("buildStrongRoute", () => {
 
       const { findByTestId } = render(<RemixStub initialEntries={["/bar"]} />);
       const element = await findByTestId("failure");
+
       expect(element).toMatchInlineSnapshot(`
         <pre
           data-testid="failure"
@@ -347,7 +348,9 @@ describe("buildStrongRoute", () => {
         <RemixStub initialEntries={["/foo"]} />
       );
       const element = (await findByTestId("form")) as HTMLFormElement;
+
       act(() => element.submit());
+
       expect(container).toMatchInlineSnapshot(`
         <div>
           <form
