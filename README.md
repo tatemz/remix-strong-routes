@@ -37,31 +37,17 @@ npm install remix-strong-routes
 
 ## Usage
 
-### A note about the `Errorable` type
-
-This project takes inspiration from Go's approach to [error handling](https://go.dev/blog/error-handling-and-go) by forcing your Remix `loaders` and `actions` to be explicit when returning data.
-
-The `Errorable` type is a strongly typed tuple that is defined below:
-
-```ts
-type ErrorableSuccess<T> = [T, null];
-type ErrorableError<E> = [null, E];
-type Errorable<T, E = unknown> = ErrorableSuccess<T> | ErrorableError<E>;
-```
-
-Sometimes working with an `Errorable` can be hard to read; for this reason, this library provides helper functions in [`errorable.ts`](https://github.com/tatemz/remix-strong-routes/blob/main/src/errorable.ts).
-
 ### Returning Data inside `loader` and `action`
 
 There are 3 possible options when returning data in a `StrongLoader` or `StrongAction`
 
-- Return an `ErrorableSuccess` tuple (this will send the data to your route component)
-- Return an `ErrorableError` tuple (this will send the data to your error boundary component)
+- Send data to your component with the `toComponent` callback
+- Send data to your error boundary with the `toErrorBoundary` callback.
 - Return a `StrongRedirect` object (this will perform an HTTP redirect)
 
 ### Uncaught Errors
 
-If your strong route `loader` or `action` returns an `ErrorableError` but was not built with a `StrongErrorBoundary`, the error will bubble up to the Remix root error boundary.
+If your strong route `loader` or `action` calls `toErrorBoundary`, but was not built with a `StrongErrorBoundary`, the error will bubble up to the Remix root error boundary.
 
 ### Define Types
 
@@ -85,69 +71,56 @@ type RedirectToLogin = StrongRedirect<
 ### Define Loader
 
 ```ts
-import { StrongLoader, toSuccess, toError } from "remix-strong-routes";
+import { strongLoader, toSuccess, toError } from "remix-strong-routes";
 
-const strongLoader: StrongLoader<
-  FooResponse,
-  BarResponse,
-  RedirectToLogin
-> = async (
-  { context, request, params },
-  /**
-   * Defining your success & error handlers in the arguments of the loader or
-   * action strengthens the types, as they can inherit the type arguments of
-   * StrongLoader.
-   */
-  toComponent = toSuccess,
-  toErrorBoundary = toError
-) => {
-  // Try to validate a session
-  if (await isUserLoggedIn(request)) {
-    // Return a redirect object
-    const redirectToLogin: RedirectToLogin = {
-      data: "/login",
-      status: HttpStatusCode.MOVED_PERMANENTLY,
-    };
-    return redirectToLogin;
+const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
+  async ({ context, request, params }, toComponent, toErrorBoundary) => {
+    // Try to validate a session
+    if (await isUserLoggedIn(request)) {
+      // Return a redirect object
+      const redirectToLogin: RedirectToLogin = {
+        data: "/login",
+        status: HttpStatusCode.MOVED_PERMANENTLY,
+      };
+      return redirectToLogin;
+    }
+
+    try {
+      // Try to load some data
+      const fooData = await getFooData();
+
+      // Build a typesafe response object
+      const fooResponse: FooResponse = {
+        data: fooData,
+        status: HttpStatusCode.OK,
+      };
+
+      // Return a type safe error tuple indicating success
+      return toComponent(fooResponse);
+    } catch (e) {
+      // Build a typesafe response object
+      const barResponse: BarResponse = {
+        data: "Bar",
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+      };
+
+      // Return a type safe error tuple indicating failure
+      return toErrorBoundary(barResponse);
+    }
   }
-
-  try {
-    // Try to load some data
-    const fooData = await getFooData();
-
-    // Build a typesafe response object
-    const fooResponse: FooResponse = {
-      data: fooData,
-      status: HttpStatusCode.OK,
-    };
-
-    // Return a type safe error tuple indicating success
-    return toComponent(fooResponse);
-  } catch (e) {
-    // Build a typesafe response object
-    const barResponse: BarResponse = {
-      data: "Bar",
-      status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-    };
-
-    // Return a type safe error tuple indicating failure
-    return toErrorBoundary(barResponse);
-  }
-};
+);
 ```
 
 ### Define Action
 
 ```ts
-import { StrongAction } from "remix-strong-routes";
+import { strongAction } from "remix-strong-routes";
 
-const strongAction: StrongAction<
-  FooResponse,
-  BarResponse,
-  RedirectToLogin
-> = async () => {
-  // ... Same as the loader
-};
+const action = strongAction<BarResponse, FooResponse, RedirectToLogin>(
+  async ({ context, request, params }, toComponent, toErrorBoundary) => {
+    // ... Same as the loader
+  }
+);
 ```
 
 ### Define Route Component
