@@ -8,7 +8,7 @@ import {
   StrongRemixRouteExports,
   StrongResponse,
 } from "./types";
-import { Errorable } from "./errorable";
+import * as E from "fp-ts/Either";
 
 export const buildStrongRoute = <
   LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
@@ -32,8 +32,10 @@ export const buildStrongRoute = <
 
   if (loader) {
     const isLoaderRedirect = (
-      raw: LoaderRedirect | Errorable<LoaderSuccess, LoaderFailure>
-    ): raw is LoaderRedirect => !Array.isArray(raw);
+      raw: LoaderRedirect | E.Either<LoaderFailure, LoaderSuccess>
+    ): raw is LoaderRedirect => {
+      return !raw.hasOwnProperty("_tag");
+    };
 
     output["loader"] = async (args) => {
       const result = await loader(args);
@@ -43,16 +45,25 @@ export const buildStrongRoute = <
         return redirect(data, init as ResponseInit);
       }
 
-      const [response, err] = result;
-      if (err) throw strongResponse(err);
-      return strongResponse(response as LoaderSuccess);
+      const handleResult = E.match<LoaderFailure, LoaderSuccess, Response>(
+        (err) => {
+          throw strongResponse(err);
+        },
+        (success) => {
+          return strongResponse(success);
+        }
+      );
+
+      return handleResult(result);
     };
   }
 
   if (action) {
     const isActionRedirect = (
-      raw: ActionRedirect | Errorable<ActionSuccess, ActionFailure>
-    ): raw is ActionRedirect => !Array.isArray(raw);
+      raw: ActionRedirect | E.Either<ActionFailure, ActionSuccess>
+    ): raw is ActionRedirect => {
+      return !raw.hasOwnProperty("_tag");
+    };
 
     output["action"] = async (args) => {
       const result = await action(args);
@@ -61,9 +72,17 @@ export const buildStrongRoute = <
         const { data, ...init } = result;
         return redirect(data, init as ResponseInit);
       }
-      const [response, err] = result;
-      if (err) throw strongResponse(err);
-      return strongResponse(response as ActionSuccess);
+
+      const handleResult = E.match<ActionFailure, ActionSuccess, Response>(
+        (err) => {
+          throw strongResponse(err);
+        },
+        (success) => {
+          return strongResponse(success);
+        }
+      );
+
+      return handleResult(result);
     };
   }
 

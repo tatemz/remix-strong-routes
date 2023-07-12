@@ -37,6 +37,9 @@
     "url": "https://github.com/tatemz/remix-strong-routes.git"
   },
   "license": "MIT",
+  "dependencies": {
+    "fp-ts": "2.16.0"
+  },
   "peerDependencies": {
     "@remix-run/react": "^1.15.0 || ^1.16.0 || ^1.17.0",
     "@remix-run/server-runtime": "^1.15.0 || ^1.16.0 || ^1.17.0",
