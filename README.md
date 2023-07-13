@@ -7,7 +7,6 @@
 - [Background](#background)
 - [Install](#install)
 - [Usage](#usage)
-  - [A note about the `Errorable` type](#a-note-about-the--errorable--type)
   - [Returning Data inside `loader` and `action`](#returning-data-inside--loader--and--action-)
   - [Uncaught Errors](#uncaught-errors)
   - [Define Types](#define-types)
