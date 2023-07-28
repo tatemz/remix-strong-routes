@@ -75,7 +75,11 @@ type RedirectToLogin = R.StrongRedirect<
 ```ts
 import * as R from "remix-strong-routes";
 
-const loader: R.StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
+const loader: R.StrongLoader<
+  BarResponse, 
+  FooResponse, 
+  RedirectToLogin
+> = async ({
   context,
   request,
   params,
