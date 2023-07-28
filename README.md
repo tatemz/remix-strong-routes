@@ -52,28 +52,30 @@ If your strong route `loader` or `action` calls `toErrorBoundary`, but was not b
 ### Define Types
 
 ```ts
-import {
-  StrongResponse,
-  StrongRedirect,
-  HttpStatusCode,
-} from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
-type FooResponse = StrongResponse<"Foo", HttpStatusCode.OK>;
+type FooResponse = R.StrongResponse<
+  "Foo", 
+  R.HttpStatusCode.OK
+>;
 
-type BarResponse = StrongResponse<"Bar", HttpStatusCode.INTERNAL_SERVER_ERROR>;
+type BarResponse = R.StrongResponse<
+  "Bar", 
+  R.HttpStatusCode.INTERNAL_SERVER_ERROR
+>;
 
-type RedirectToLogin = StrongRedirect<
+type RedirectToLogin = R.StrongRedirect<
   "/login",
-  HttpStatusCode.MOVED_PERMANENTLY
+  R.HttpStatusCode.MOVED_PERMANENTLY
 >;
 ```
 
 ### Define Loader
 
 ```ts
-import { StrongLoader, succeed, fail, redirect } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
-const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
+const loader: R.StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
   context,
   request,
   params,
@@ -85,7 +87,7 @@ const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
       data: "/login",
       status: HttpStatusCode.MOVED_PERMANENTLY,
     };
-    return redirect(redirectToLogin);
+    return R.redirect(redirectToLogin);
   }
 
   try {
@@ -99,7 +101,7 @@ const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
     };
 
     // Return a type safe error tuple indicating success
-    return succeed(fooResponse);
+    return R.succeed(fooResponse);
   } catch (e) {
     // Build a typesafe response object
     const barResponse: BarResponse = {
@@ -108,7 +110,7 @@ const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
     };
 
     // Return a type safe error tuple indicating failure
-    return fail(barResponse);
+    return R.fail(barResponse);
   }
 };
 ```
@@ -116,9 +118,13 @@ const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
 ### Define Action
 
 ```ts
-import { StrongAction, succeed, fail, redirect } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
-const action: StrongAction<BarResponse, FooResponse, RedirectToLogin> = async ({
+const action: R.StrongAction<
+  BarResponse, 
+  FooResponse, 
+  RedirectToLogin
+> = async ({
   context,
   request,
   params,
@@ -130,9 +136,9 @@ const action: StrongAction<BarResponse, FooResponse, RedirectToLogin> = async ({
 ### Define Route Component
 
 ```tsx
-import { StrongComponent } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
-const strongComponent: StrongComponent<FooResponse> = ({ status, data }) => {
+const strongComponent: R.StrongComponent<FooResponse> = ({ status, data }) => {
   return (
     <ul>
       <li>Status: {status}</li>
@@ -145,9 +151,9 @@ const strongComponent: StrongComponent<FooResponse> = ({ status, data }) => {
 ### Define Error Boundary
 
 ```tsx
-import { StrongErrorBoundary } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
-const strongErrorBoundary: StrongErrorBoundary<BarResponse> = ({
+const strongErrorBoundary: R.StrongErrorBoundary<BarResponse> = ({
   status,
   data,
 }) => {
@@ -163,10 +169,10 @@ const strongErrorBoundary: StrongErrorBoundary<BarResponse> = ({
 ### Configure & Export Route
 
 ```tsx
-import { buildStrongRoute } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
 // Build strongly typed route exports
-const route = buildStrongRoute<LoaderResponse>({
+const route = R.buildStrongRoute<LoaderResponse>({
   routeId: "root",
   loader: strongLoader,
   action: strongAction,
@@ -190,10 +196,10 @@ The purpose of this hook is to prevent the need to remember a route's ID more th
 You can run `npx remix routes --json` to reveal all of the route IDs in your app.
 
 ```tsx
-import { buildStrongRoute } from "remix-strong-routes";
+import * as R from "remix-strong-routes";
 
 // Build strongly typed route exports
-const route1 = buildStrongRoute<LoaderResponse>({
+const route1 = R.buildStrongRoute<LoaderResponse>({
   // This routeId MUST be precisely what Remix expects
   routeId: "root",
   loader: strongLoader,
@@ -202,7 +208,7 @@ const route1 = buildStrongRoute<LoaderResponse>({
   ErrorBoundary: strongErrorBoundary,
 });
 
-const route2 = buildStrongRoute<LoaderResponse>({
+const route2 = R.buildStrongRoute<LoaderResponse>({
   routeId: "routes/home",
   Component: () => {
     // If route1.routeId is not accurate, this will fail.
