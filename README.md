@@ -15,6 +15,7 @@
   - [Define Route Component](#define-route-component)
   - [Define Error Boundary](#define-error-boundary)
   - [Configure & Export Route](#configure---export-route)
+  - [Call Another Route's Loaders](#call-another-routes-loader)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -181,6 +182,8 @@ export default route.Component;
 This library uses `buildStrongRoute` to expose a more ergonomic `useRouteLoaderData` hook, which is a wrapper around the default Remix `useRouteLoaderData` hook. There are no guardrails in place within `remix-strong-routes` to enforce a route's parent-child relationship so it may be a defect if your application is not setup correctly. This may be improved when Remix exposes its route configurations under the hood.
 
 The purpose of this hook is to prevent the need to remember a route's ID more than one time.
+
+You can run `npx remix routes --json` to reveal all of the route IDs in your app.
 
 ```tsx
 import { buildStrongRoute } from "remix-strong-routes";
