@@ -73,49 +73,44 @@ type RedirectToLogin = StrongRedirect<
 ```ts
 import { strongLoader } from "remix-strong-routes";
 
-const loader = strongLoader<
-  BarResponse, 
-  FooResponse, 
-  RedirectToLogin
->(async (
-  { context, request, params }, 
-  { fail, redirect, succeed }
-) => {
-  // Try to validate a session
-  if (await isUserLoggedIn(request)) {
-    // Build a redirect object
-    const redirectToLogin: RedirectToLogin = {
-      data: "/login",
-      status: HttpStatusCode.MOVED_PERMANENTLY,
-    };
+const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
+  async ({ context, request, params }, { fail, redirect, succeed }) => {
+    // Try to validate a session
+    if (await isUserLoggedIn(request)) {
+      // Build a redirect object
+      const redirectToLogin: RedirectToLogin = {
+        data: "/login",
+        status: HttpStatusCode.MOVED_PERMANENTLY,
+      };
 
-    // Return a type-safe redirect
-    return redirect(redirectToLogin);
-  }
+      // Return a type-safe redirect
+      return redirect(redirectToLogin);
+    }
 
-  try {
-    // Try to load some data
-    const fooData = await getFooData();
+    try {
+      // Try to load some data
+      const fooData = await getFooData();
 
-    // Build a type-safe response object
-    const fooResponse: FooResponse = {
-      data: fooData,
-      status: HttpStatusCode.OK,
-    };
+      // Build a type-safe response object
+      const fooResponse: FooResponse = {
+        data: fooData,
+        status: HttpStatusCode.OK,
+      };
 
-    // Return a type-safe success to your component
-    return succeed(fooResponse);
-  } catch (e) {
-    // Build a type-safe response object
-    const barResponse: BarResponse = {
-      data: "Bar",
-      status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-    };
+      // Return a type-safe success to your component
+      return succeed(fooResponse);
+    } catch (e) {
+      // Build a type-safe response object
+      const barResponse: BarResponse = {
+        data: "Bar",
+        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+      };
 
-    // Return a type-safe error to your error boundary
-    return fail(barResponse);
-  }
-});
+      // Return a type-safe error to your error boundary
+      return fail(barResponse);
+    }
+  },
+);
 ```
 
 ### Define Action
@@ -124,8 +119,8 @@ const loader = strongLoader<
 import { strongAction } from "remix-strong-routes";
 
 const action - strongAction<
-  BarResponse, 
-  FooResponse, 
+  BarResponse,
+  FooResponse,
   RedirectToLogin
 >(async (
   { context, request, params },
