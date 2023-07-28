@@ -18,9 +18,9 @@ import {
   StrongResponse,
   buildStrongRoute,
 } from "./";
-import { strongAction } from "./strongAction";
-import { strongLoader } from "./strongLoader";
 import { strongResponse } from "./strongResponse";
+import { strongLoader } from "./strongLoader";
+import { strongAction } from "./strongAction";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -86,7 +86,7 @@ describe("buildStrongRoute", () => {
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  >(async ({ request }, { succeed, redirect, fail }) => {
+  >(async ({ request }, { fail, succeed, redirect }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
       return fail(barResponse);
@@ -103,7 +103,7 @@ describe("buildStrongRoute", () => {
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  >(async ({ request }, { succeed, redirect, fail }) => {
+  >(async ({ request }, { fail, succeed, redirect }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
       return fail(barResponse);
@@ -118,7 +118,9 @@ describe("buildStrongRoute", () => {
 
   const Component: StrongComponent<FooResponse | BazResponse> = (props) => {
     if (props.status === HttpStatusCode.ACCEPTED) return null;
+
     console.log(props.data); // Should narrow to "Foo"
+
     return (
       <>
         <Form method="post" data-testid="form">

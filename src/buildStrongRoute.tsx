@@ -10,10 +10,9 @@ import {
 import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { strongResponse } from "./strongResponse";
 import {
+  BrandedDataFunction,
   BuildStrongRemixRouteExportsOpts,
   PickDataAndStatus,
-  StrongAction,
-  StrongLoader,
   StrongRedirect,
   StrongRemixRouteExports,
   StrongResponse,
@@ -50,16 +49,14 @@ const handleDataFunctionForRemix = async <
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
-  dataFunction:
-    | StrongLoader<Failure, Success, Redirect>
-    | StrongAction<Failure, Success, Redirect>,
+  dataFunction: BrandedDataFunction<Failure, Success, Redirect>,
   args: DataFunctionArgs,
 ) => {
-  const resultEffect = (await dataFunction(args, {
-    succeed: (s: Success) => Effect.succeed(s),
-    redirect: (r: Redirect) => Effect.succeed(r),
-    fail: (f: Failure) => Effect.fail(f),
-  })) as Effect.Effect<never, Failure, Success | Redirect>;
+  const resultEffect = (await dataFunction(args)) as Effect.Effect<
+    never,
+    Failure,
+    Success | Redirect
+  >;
 
   const finalEffect = pipe(
     resultEffect,
