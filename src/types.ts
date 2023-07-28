@@ -30,9 +30,12 @@ export type StrongResponse<T, S extends NonRedirectStatus> = _StrongResponse<
 
 export type StrongRedirect<T, S extends RedirectStatus> = _StrongResponse<T, S>;
 
-export type PickDataAndStatus<
-  T extends _StrongResponse<unknown, HttpStatusCode>,
-> = { data: T["data"]; status: T["status"] };
+export type PickDataAndStatus<T> = T extends StrongResponse<
+  unknown,
+  NonRedirectStatus
+>
+  ? { data: T["data"]; status: T["status"] }
+  : NonNullable<unknown>;
 
 export type StrongLoader<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
@@ -41,41 +44,47 @@ export type StrongLoader<
 > = (
   args: LoaderArgs,
   callbacks: {
-    succeed: typeof Effect.succeed;
-    redirect: typeof Effect.succeed;
-    fail: typeof Effect.fail;
+    succeed: (s: Success) => Effect.Effect<never, never, Success>;
+    redirect: (r: Redirect) => Effect.Effect<never, never, Redirect>;
+    fail: (f: Failure) => Effect.Effect<never, Failure, never>;
   },
-) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
+) => Promise<
+  | Effect.Effect<never, Failure, never>
+  | Effect.Effect<never, never, Success>
+  | Effect.Effect<never, never, Redirect>
+>;
 
 export type StrongAction<
-  Failure extends _StrongResponse<unknown, NonRedirectStatus> = never,
-  Success extends _StrongResponse<unknown, NonRedirectStatus> = never,
+  Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: ActionArgs,
   callbacks: {
-    succeed: typeof Effect.succeed;
-    redirect: typeof Effect.succeed;
-    fail: typeof Effect.fail;
+    succeed: (s: Success) => Effect.Effect<never, never, Success>;
+    redirect: (r: Redirect) => Effect.Effect<never, never, Redirect>;
+    fail: (f: Failure) => Effect.Effect<never, Failure, never>;
   },
-) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
+) => Promise<
+  | Effect.Effect<never, Failure, never>
+  | Effect.Effect<never, never, Success>
+  | Effect.Effect<never, never, Redirect>
+>;
 
 export type StrongComponent<
-  Success extends _StrongResponse<unknown, NonRedirectStatus>,
-  Props extends PickDataAndStatus<Success> = PickDataAndStatus<Success>,
-> = ComponentType<Props>;
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
+> = ComponentType<PickDataAndStatus<Success>>;
 
 export type StrongErrorBoundary<
-  Failure extends _StrongResponse<unknown, NonRedirectStatus>,
-  Props extends PickDataAndStatus<Failure> = PickDataAndStatus<Failure>,
-> = ComponentType<Props>;
+  Failure extends StrongResponse<unknown, NonRedirectStatus>,
+> = ComponentType<PickDataAndStatus<Failure>>;
 
 export type BuildStrongRemixRouteExportsOpts<
-  LoaderSuccess extends _StrongResponse<unknown, NonRedirectStatus> = never,
-  ActionSuccess extends _StrongResponse<unknown, NonRedirectStatus> = never,
-  LoaderFailure extends _StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   LoaderRedirect extends StrongRedirect<string, RedirectStatus> = never,
-  ActionFailure extends _StrongResponse<unknown, NonRedirectStatus> = never,
+  ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   ActionRedirect extends StrongRedirect<string, RedirectStatus> = never,
 > = {
   routeId: string;
@@ -87,7 +96,7 @@ export type BuildStrongRemixRouteExportsOpts<
 
 export type StrongRemixRouteExports<
   T,
-  LoaderSuccess extends _StrongResponse<unknown, NonRedirectStatus> = never,
+  LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus>,
 > = {
   [K in keyof T]: K extends "loader"
     ? LoaderFunction

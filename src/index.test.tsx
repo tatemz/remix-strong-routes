@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Form, Outlet } from "@remix-run/react";
 import {
@@ -57,6 +58,7 @@ describe("strongResponse", () => {
 
 describe("buildStrongRoute", () => {
   type FooResponse = StrongResponse<"Foo", HttpStatusCode.OK>;
+  type BazResponse = StrongResponse<"Baz", HttpStatusCode.ACCEPTED>;
 
   type BarResponse = StrongResponse<
     "Bar",
@@ -80,37 +82,43 @@ describe("buildStrongRoute", () => {
     status: HttpStatusCode.MOVED_PERMANENTLY,
   };
 
-  const loader = strongLoader<BarResponse, FooResponse, RedirectResponse>(
-    async ({ request }, { succeed, redirect, fail }) => {
-      const url = new URL(request.url);
-      if (url.searchParams.has("fail")) {
-        return fail(barResponse);
-      }
+  const loader = strongLoader<
+    BarResponse,
+    FooResponse | BazResponse,
+    RedirectResponse
+  >(async ({ request }, { succeed, redirect, fail }) => {
+    const url = new URL(request.url);
+    if (url.searchParams.has("fail")) {
+      return fail(barResponse);
+    }
 
-      if (url.searchParams.has("succeed")) {
-        return succeed(fooResponse);
-      }
+    if (url.searchParams.has("succeed")) {
+      return succeed(fooResponse);
+    }
 
-      return redirect(redirectResponse);
-    },
-  );
+    return redirect(redirectResponse);
+  });
 
-  const action = strongAction<BarResponse, FooResponse, RedirectResponse>(
-    async ({ request }, { succeed, redirect, fail }) => {
-      const url = new URL(request.url);
-      if (url.searchParams.has("fail")) {
-        return fail(barResponse);
-      }
+  const action = strongAction<
+    BarResponse,
+    FooResponse | BazResponse,
+    RedirectResponse
+  >(async ({ request }, { succeed, redirect, fail }) => {
+    const url = new URL(request.url);
+    if (url.searchParams.has("fail")) {
+      return fail(barResponse);
+    }
 
-      if (url.searchParams.has("succeed")) {
-        return succeed(fooResponse);
-      }
+    if (url.searchParams.has("succeed")) {
+      return succeed(fooResponse);
+    }
 
-      return redirect(redirectResponse);
-    },
-  );
+    return redirect(redirectResponse);
+  });
 
-  const Component: StrongComponent<FooResponse> = (props) => {
+  const Component: StrongComponent<FooResponse | BazResponse> = (props) => {
+    if (props.status === HttpStatusCode.ACCEPTED) return null;
+    console.log(props.data); // Should narrow to "Foo"
     return (
       <>
         <Form method="post" data-testid="form">
@@ -152,8 +160,8 @@ describe("buildStrongRoute", () => {
   // TODO - add test cases for routeWithoutLoader
   buildStrongRoute({
     routeId: "foo",
-    Component,
-    ErrorBoundary,
+    Component: () => <></>,
+    ErrorBoundary: () => <></>,
   });
 
   afterEach(cleanup);

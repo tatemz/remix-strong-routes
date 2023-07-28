@@ -11,6 +11,7 @@ import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { strongResponse } from "./strongResponse";
 import {
   BuildStrongRemixRouteExportsOpts,
+  PickDataAndStatus,
   StrongAction,
   StrongLoader,
   StrongRedirect,
@@ -50,15 +51,16 @@ const handleDataFunctionForRemix = async <
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
   dataFunction:
-    | StrongLoader<Success, Failure, Redirect>
-    | StrongAction<Success, Failure, Redirect>,
+    | StrongLoader<Failure, Success, Redirect>
+    | StrongAction<Failure, Success, Redirect>,
   args: DataFunctionArgs,
 ) => {
-  const resultEffect = await dataFunction(args, {
-    succeed: Effect.succeed,
-    redirect: Effect.succeed,
-    fail: Effect.fail,
-  });
+  const resultEffect = (await dataFunction(args, {
+    succeed: (s: Success) => Effect.succeed(s),
+    redirect: (r: Redirect) => Effect.succeed(r),
+    fail: (f: Failure) => Effect.fail(f),
+  })) as Effect.Effect<never, Failure, Success | Redirect>;
+
   const finalEffect = pipe(
     resultEffect,
     Effect.mapError(strongResponse),
@@ -97,7 +99,7 @@ export const buildStrongRoute = <
   >,
 ): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
   const { loader, action, Component, ErrorBoundary } = opts;
-  const output = {} as StrongRemixRouteExports<typeof opts>;
+  const output = {} as StrongRemixRouteExports<typeof opts, LoaderSuccess>;
 
   if (loader) {
     output["loader"] = async (args) => handleDataFunctionForRemix(loader, args);
@@ -125,8 +127,9 @@ export const buildStrongRoute = <
     };
   }
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-explicit-any
-  output["useRouteLoaderData"] = () => useRouteLoaderData(opts.routeId) as any;
+  output["useRouteLoaderData"] = () =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useRouteLoaderData(opts.routeId) as PickDataAndStatus<LoaderSuccess>;
   output["routeId"] = opts.routeId;
 
   return output;

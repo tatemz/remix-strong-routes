@@ -107,7 +107,7 @@ const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
       // Return a type safe error tuple indicating failure
       return fail(barResponse);
     }
-  }
+  },
 );
 ```
 
@@ -119,7 +119,7 @@ import { strongAction } from "remix-strong-routes";
 const action = strongAction<BarResponse, FooResponse, RedirectToLogin>(
   async ({ context, request, params }, { succeed, redirect, fail }) => {
     // ... Same as the loader
-  }
+  },
 );
 ```
 

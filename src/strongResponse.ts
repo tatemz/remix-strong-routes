@@ -1,8 +1,8 @@
-import { NonRedirectStatus } from "./HttpStatusCode";
-import { StrongResponse } from "./types";
+import { HttpStatusCode } from "./HttpStatusCode";
+import { _StrongResponse } from "./types";
 
 export const strongResponse = <
-  T extends StrongResponse<unknown, NonRedirectStatus>,
+  T extends _StrongResponse<unknown, HttpStatusCode>,
 >(
   strongResponse: T,
 ): Response => {
