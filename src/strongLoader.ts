@@ -6,9 +6,9 @@ import { Effect } from "effect";
 export const strongLoader = <
   Failure extends StrongResponse<unknown, NonRedirectStatus>,
   Success extends StrongResponse<unknown, NonRedirectStatus>,
-  Redirect extends StrongRedirect<string, RedirectStatus> = never
+  Redirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
-  loaderFn: StrongLoader<Failure, Success, Redirect>
+  loaderFn: StrongLoader<Failure, Success, Redirect>,
 ) => {
   return (args: DataFunctionArgs) => {
     return loaderFn(args, {

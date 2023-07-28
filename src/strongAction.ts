@@ -6,9 +6,9 @@ import { Effect } from "effect";
 export const strongAction = <
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
-  Redirect extends StrongRedirect<string, RedirectStatus> = never
+  Redirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
-  actionFn: StrongAction<Failure, Success, Redirect>
+  actionFn: StrongAction<Failure, Success, Redirect>,
 ) => {
   return (args: DataFunctionArgs) => {
     return actionFn(args, {

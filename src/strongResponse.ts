@@ -1,10 +1,10 @@
-import { HttpStatusCode, NonRedirectStatus } from "./HttpStatusCode";
+import { NonRedirectStatus } from "./HttpStatusCode";
 import { StrongResponse } from "./types";
 
 export const strongResponse = <
-  T extends StrongResponse<unknown, NonRedirectStatus>
+  T extends StrongResponse<unknown, NonRedirectStatus>,
 >(
-  strongResponse: T
+  strongResponse: T,
 ): Response => {
   const { data, headers: _headers, ...init } = strongResponse;
 
@@ -20,6 +20,6 @@ export const strongResponse = <
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...(init as any),
       headers,
-    }
+    },
   );
 };

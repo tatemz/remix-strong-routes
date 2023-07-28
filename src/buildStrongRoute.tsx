@@ -1,4 +1,6 @@
-import { DataFunctionArgs, json, redirect } from "@remix-run/server-runtime";
+import { useRouteLoaderData } from "@remix-run/react";
+import { DataFunctionArgs, redirect } from "@remix-run/server-runtime";
+import { Effect, Exit, pipe } from "effect";
 import { createElement } from "react";
 import {
   HttpStatusCode,
@@ -15,8 +17,6 @@ import {
   StrongRemixRouteExports,
   StrongResponse,
 } from "./types";
-import { Effect, pipe, Exit } from "effect";
-import { useRouteLoaderData } from "@remix-run/react";
 
 const isRedirectStatus = (status: HttpStatusCode): status is RedirectStatus =>
   status >= HttpStatusCode.MULTIPLE_CHOICES &&
@@ -25,16 +25,16 @@ const isRedirectStatus = (status: HttpStatusCode): status is RedirectStatus =>
 const isStrongResponseRedirect = (
   raw:
     | StrongResponse<unknown, NonRedirectStatus>
-    | StrongRedirect<string, RedirectStatus>
+    | StrongRedirect<string, RedirectStatus>,
 ): raw is StrongRedirect<string, RedirectStatus> =>
   isRedirectStatus(raw.status);
 
 const handleSuccessForRemix = <
   T extends
     | StrongResponse<unknown, NonRedirectStatus>
-    | StrongRedirect<string, RedirectStatus>
+    | StrongRedirect<string, RedirectStatus>,
 >(
-  response: T
+  response: T,
 ) => {
   if (isStrongResponseRedirect(response)) {
     const { data, ...init } = response;
@@ -47,12 +47,12 @@ const handleSuccessForRemix = <
 const handleDataFunctionForRemix = async <
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
-  Redirect extends StrongRedirect<string, RedirectStatus> = never
+  Redirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
   dataFunction:
     | StrongLoader<Success, Failure, Redirect>
     | StrongAction<Success, Failure, Redirect>,
-  args: DataFunctionArgs
+  args: DataFunctionArgs,
 ) => {
   const resultEffect = await dataFunction(args, {
     succeed: Effect.succeed,
@@ -62,7 +62,7 @@ const handleDataFunctionForRemix = async <
   const finalEffect = pipe(
     resultEffect,
     Effect.mapError(strongResponse),
-    Effect.map(handleSuccessForRemix)
+    Effect.map(handleSuccessForRemix),
   );
 
   const exit = Effect.runSyncExit(finalEffect);
@@ -73,6 +73,7 @@ const handleDataFunctionForRemix = async <
 const returnOrThrowExitFailure = (exit: Exit.Exit<Response, Response>) =>
   Exit.match(exit, {
     onFailure: (err) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       throw (err as any).error;
     },
     onSuccess: (data) => data,
@@ -84,7 +85,7 @@ export const buildStrongRoute = <
   LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   LoaderRedirect extends StrongRedirect<string, RedirectStatus> = never,
   ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
-  ActionRedirect extends StrongRedirect<string, RedirectStatus> = never
+  ActionRedirect extends StrongRedirect<string, RedirectStatus> = never,
 >(
   opts: BuildStrongRemixRouteExportsOpts<
     LoaderSuccess,
@@ -93,7 +94,7 @@ export const buildStrongRoute = <
     LoaderRedirect,
     ActionFailure,
     ActionRedirect
-  >
+  >,
 ): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
   const { loader, action, Component, ErrorBoundary } = opts;
   const output = {} as StrongRemixRouteExports<typeof opts>;
@@ -110,6 +111,7 @@ export const buildStrongRoute = <
     output["Component"] = () => {
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const data = useStrongLoaderData<LoaderSuccess>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return createElement(Component, data as any);
     };
   }
@@ -118,10 +120,12 @@ export const buildStrongRoute = <
     output["ErrorBoundary"] = () => {
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const data = useStrongRouteError<LoaderFailure>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return createElement(ErrorBoundary, data as any);
     };
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-explicit-any
   output["useRouteLoaderData"] = () => useRouteLoaderData(opts.routeId) as any;
   output["routeId"] = opts.routeId;
 

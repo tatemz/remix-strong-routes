@@ -1,4 +1,5 @@
-import { Form, Outlet, useLoaderData } from "@remix-run/react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Form, Outlet } from "@remix-run/react";
 import {
   ActionFunction,
   DataFunctionArgs,
@@ -91,7 +92,7 @@ describe("buildStrongRoute", () => {
       }
 
       return redirect(redirectResponse);
-    }
+    },
   );
 
   const action = strongAction<BarResponse, FooResponse, RedirectResponse>(
@@ -106,7 +107,7 @@ describe("buildStrongRoute", () => {
       }
 
       return redirect(redirectResponse);
-    }
+    },
   );
 
   const Component: StrongComponent<FooResponse> = (props) => {
@@ -179,7 +180,7 @@ describe("buildStrongRoute", () => {
         const result: Response = await new Promise((resolve, reject) => {
           (route1.loader as LoaderFunction)({ request } as DataFunctionArgs)
             .then(reject)
-            .catch((e: any) => {
+            .catch((e: Response) => {
               resolve(e);
             });
         });
@@ -286,7 +287,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
       const element = await screen.findByTestId("success");
       expect(element).toMatchInlineSnapshot(`
@@ -336,7 +337,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
 
       const route1Data = await screen.findByTestId("success");
@@ -379,7 +380,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />,
       );
       const element = await screen.findByTestId("failure");
 
@@ -414,7 +415,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       const { container } = render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
       const element = (await screen.findByTestId("form")) as HTMLFormElement;
 
