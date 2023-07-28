@@ -18,11 +18,8 @@ import {
 } from "./HttpStatusCode";
 
 export type BrandedDataFunction<
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Failure extends StrongResponse<unknown, NonRedirectStatus>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Success extends StrongResponse<unknown, NonRedirectStatus>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Redirect extends StrongRedirect<string, RedirectStatus>,
 > = LoaderFunction & {
   __brand?: {
