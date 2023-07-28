@@ -43,16 +43,7 @@ export type StrongLoader<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: LoaderArgs,
-  callbacks: {
-    succeed: (s: Success) => Effect.Effect<never, never, Success>;
-    redirect: (r: Redirect) => Effect.Effect<never, never, Redirect>;
-    fail: (f: Failure) => Effect.Effect<never, Failure, never>;
-  },
-) => Promise<
-  | Effect.Effect<never, Failure, never>
-  | Effect.Effect<never, never, Success>
-  | Effect.Effect<never, never, Redirect>
->;
+) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
 
 export type StrongAction<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
@@ -60,16 +51,7 @@ export type StrongAction<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: ActionArgs,
-  callbacks: {
-    succeed: (s: Success) => Effect.Effect<never, never, Success>;
-    redirect: (r: Redirect) => Effect.Effect<never, never, Redirect>;
-    fail: (f: Failure) => Effect.Effect<never, Failure, never>;
-  },
-) => Promise<
-  | Effect.Effect<never, Failure, never>
-  | Effect.Effect<never, never, Success>
-  | Effect.Effect<never, never, Redirect>
->;
+) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
 
 export type StrongComponent<
   Success extends StrongResponse<unknown, NonRedirectStatus>,

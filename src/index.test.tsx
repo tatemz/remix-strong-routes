@@ -8,18 +8,19 @@ import {
 } from "@remix-run/server-runtime";
 import { unstable_createRemixStub } from "@remix-run/testing";
 import { act, cleanup, render, screen } from "@testing-library/react";
+import { Effect } from "effect";
 import "isomorphic-fetch";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   HttpStatusCode,
+  StrongAction,
   StrongComponent,
   StrongErrorBoundary,
+  StrongLoader,
   StrongRedirect,
   StrongResponse,
   buildStrongRoute,
 } from "./";
-import { strongAction } from "./strongAction";
-import { strongLoader } from "./strongLoader";
 import { strongResponse } from "./strongResponse";
 
 describe("strongResponse", () => {
@@ -82,43 +83,45 @@ describe("buildStrongRoute", () => {
     status: HttpStatusCode.MOVED_PERMANENTLY,
   };
 
-  const loader = strongLoader<
+  const loader: StrongLoader<
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  >(async ({ request }, { succeed, redirect, fail }) => {
+  > = async ({ request }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
-      return fail(barResponse);
+      return Effect.fail(barResponse);
     }
 
     if (url.searchParams.has("succeed")) {
-      return succeed(fooResponse);
+      return Effect.succeed(fooResponse);
     }
 
-    return redirect(redirectResponse);
-  });
+    return Effect.succeed(redirectResponse);
+  };
 
-  const action = strongAction<
+  const action: StrongAction<
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  >(async ({ request }, { succeed, redirect, fail }) => {
+  > = async ({ request }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
-      return fail(barResponse);
+      return Effect.fail(barResponse);
     }
 
     if (url.searchParams.has("succeed")) {
-      return succeed(fooResponse);
+      return Effect.succeed(fooResponse);
     }
 
-    return redirect(redirectResponse);
-  });
+    return Effect.succeed(redirectResponse);
+  };
 
   const Component: StrongComponent<FooResponse | BazResponse> = (props) => {
     if (props.status === HttpStatusCode.ACCEPTED) return null;
+
     console.log(props.data); // Should narrow to "Foo"
+
     return (
       <>
         <Form method="post" data-testid="form">

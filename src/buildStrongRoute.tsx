@@ -55,11 +55,11 @@ const handleDataFunctionForRemix = async <
     | StrongAction<Failure, Success, Redirect>,
   args: DataFunctionArgs,
 ) => {
-  const resultEffect = (await dataFunction(args, {
-    succeed: (s: Success) => Effect.succeed(s),
-    redirect: (r: Redirect) => Effect.succeed(r),
-    fail: (f: Failure) => Effect.fail(f),
-  })) as Effect.Effect<never, Failure, Success | Redirect>;
+  const resultEffect = (await dataFunction(args)) as Effect.Effect<
+    never,
+    Failure,
+    Success | Redirect
+  >;
 
   const finalEffect = pipe(
     resultEffect,
