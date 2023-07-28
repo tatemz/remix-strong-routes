@@ -1,22 +1,90 @@
-import { redirect } from "@remix-run/server-runtime";
+import { DataFunctionArgs, json, redirect } from "@remix-run/server-runtime";
 import { createElement } from "react";
-import { NonRedirectStatus, RedirectStatus } from "./HttpStatusCode";
+import {
+  HttpStatusCode,
+  NonRedirectStatus,
+  RedirectStatus,
+} from "./HttpStatusCode";
 import { useStrongLoaderData, useStrongRouteError } from "./hooks";
 import { strongResponse } from "./strongResponse";
 import {
   BuildStrongRemixRouteExportsOpts,
+  StrongAction,
+  StrongLoader,
+  StrongRedirect,
   StrongRemixRouteExports,
   StrongResponse,
 } from "./types";
-import * as E from "fp-ts/Either";
+import { Effect, pipe, Exit } from "effect";
+import { useRouteLoaderData } from "@remix-run/react";
+
+const isRedirectStatus = (status: HttpStatusCode): status is RedirectStatus =>
+  status >= HttpStatusCode.MULTIPLE_CHOICES &&
+  status <= HttpStatusCode.PERMANENT_REDIRECT;
+
+const isStrongResponseRedirect = (
+  raw:
+    | StrongResponse<unknown, NonRedirectStatus>
+    | StrongRedirect<string, RedirectStatus>
+): raw is StrongRedirect<string, RedirectStatus> =>
+  isRedirectStatus(raw.status);
+
+const handleSuccessForRemix = <
+  T extends
+    | StrongResponse<unknown, NonRedirectStatus>
+    | StrongRedirect<string, RedirectStatus>
+>(
+  response: T
+) => {
+  if (isStrongResponseRedirect(response)) {
+    const { data, ...init } = response;
+    return redirect(data, init as ResponseInit);
+  }
+
+  return strongResponse(response);
+};
+
+const handleDataFunctionForRemix = async <
+  Success extends StrongResponse<unknown, NonRedirectStatus> = never,
+  Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  Redirect extends StrongRedirect<string, RedirectStatus> = never
+>(
+  dataFunction:
+    | StrongLoader<Success, Failure, Redirect>
+    | StrongAction<Success, Failure, Redirect>,
+  args: DataFunctionArgs
+) => {
+  const resultEffect = await dataFunction(args, {
+    succeed: Effect.succeed,
+    redirect: Effect.succeed,
+    fail: Effect.fail,
+  });
+  const finalEffect = pipe(
+    resultEffect,
+    Effect.mapError(strongResponse),
+    Effect.map(handleSuccessForRemix)
+  );
+
+  const exit = Effect.runSyncExit(finalEffect);
+
+  return returnOrThrowExitFailure(exit);
+};
+
+const returnOrThrowExitFailure = (exit: Exit.Exit<Response, Response>) =>
+  Exit.match(exit, {
+    onFailure: (err) => {
+      throw (err as any).error;
+    },
+    onSuccess: (data) => data,
+  });
 
 export const buildStrongRoute = <
   LoaderSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
   ActionSuccess extends StrongResponse<unknown, NonRedirectStatus> = never,
   LoaderFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
-  LoaderRedirect extends StrongResponse<string, RedirectStatus> = never,
+  LoaderRedirect extends StrongRedirect<string, RedirectStatus> = never,
   ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
-  ActionRedirect extends StrongResponse<string, RedirectStatus> = never
+  ActionRedirect extends StrongRedirect<string, RedirectStatus> = never
 >(
   opts: BuildStrongRemixRouteExportsOpts<
     LoaderSuccess,
@@ -26,64 +94,16 @@ export const buildStrongRoute = <
     ActionFailure,
     ActionRedirect
   >
-): StrongRemixRouteExports<typeof opts> => {
+): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
   const { loader, action, Component, ErrorBoundary } = opts;
   const output = {} as StrongRemixRouteExports<typeof opts>;
 
   if (loader) {
-    const isLoaderRedirect = (
-      raw: LoaderRedirect | E.Either<LoaderFailure, LoaderSuccess>
-    ): raw is LoaderRedirect => {
-      return !raw.hasOwnProperty("_tag");
-    };
-
-    output["loader"] = async (args) => {
-      const result = await loader(args);
-
-      if (isLoaderRedirect(result)) {
-        const { data, ...init } = result;
-        return redirect(data, init as ResponseInit);
-      }
-
-      const handleResult = E.match<LoaderFailure, LoaderSuccess, Response>(
-        (err) => {
-          throw strongResponse(err);
-        },
-        (success) => {
-          return strongResponse(success);
-        }
-      );
-
-      return handleResult(result);
-    };
+    output["loader"] = async (args) => handleDataFunctionForRemix(loader, args);
   }
 
   if (action) {
-    const isActionRedirect = (
-      raw: ActionRedirect | E.Either<ActionFailure, ActionSuccess>
-    ): raw is ActionRedirect => {
-      return !raw.hasOwnProperty("_tag");
-    };
-
-    output["action"] = async (args) => {
-      const result = await action(args);
-
-      if (isActionRedirect(result)) {
-        const { data, ...init } = result;
-        return redirect(data, init as ResponseInit);
-      }
-
-      const handleResult = E.match<ActionFailure, ActionSuccess, Response>(
-        (err) => {
-          throw strongResponse(err);
-        },
-        (success) => {
-          return strongResponse(success);
-        }
-      );
-
-      return handleResult(result);
-    };
+    output["action"] = async (args) => handleDataFunctionForRemix(action, args);
   }
 
   if (Component) {
@@ -101,6 +121,9 @@ export const buildStrongRoute = <
       return createElement(ErrorBoundary, data as any);
     };
   }
+
+  output["useRouteLoaderData"] = () => useRouteLoaderData(opts.routeId) as any;
+  output["routeId"] = opts.routeId;
 
   return output;
 };

@@ -40,9 +40,9 @@ npm install remix-strong-routes
 
 There are 3 possible options when returning data in a `StrongLoader` or `StrongAction`
 
-- Send data to your component with the `toComponent` callback
-- Send data to your error boundary with the `toErrorBoundary` callback.
-- Return a `StrongRedirect` object (this will perform an HTTP redirect)
+- Send data to your component with the `succeed` callback
+- Send data to your error boundary with the `fail` callback.
+- Perform an HTTP redirect using the `redirect` callback
 
 ### Uncaught Errors
 
@@ -73,7 +73,7 @@ type RedirectToLogin = StrongRedirect<
 import { strongLoader, toSuccess, toError } from "remix-strong-routes";
 
 const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
-  async ({ context, request, params }, toComponent, toErrorBoundary) => {
+  async ({ context, request, params }, { succeed, redirect, fail }) => {
     // Try to validate a session
     if (await isUserLoggedIn(request)) {
       // Return a redirect object
@@ -81,7 +81,7 @@ const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
         data: "/login",
         status: HttpStatusCode.MOVED_PERMANENTLY,
       };
-      return redirectToLogin;
+      return redirect(redirectToLogin);
     }
 
     try {
@@ -95,7 +95,7 @@ const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
       };
 
       // Return a type safe error tuple indicating success
-      return toComponent(fooResponse);
+      return succeed(fooResponse);
     } catch (e) {
       // Build a typesafe response object
       const barResponse: BarResponse = {
@@ -104,7 +104,7 @@ const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
       };
 
       // Return a type safe error tuple indicating failure
-      return toErrorBoundary(barResponse);
+      return fail(barResponse);
     }
   }
 );
@@ -116,7 +116,7 @@ const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
 import { strongAction } from "remix-strong-routes";
 
 const action = strongAction<BarResponse, FooResponse, RedirectToLogin>(
-  async ({ context, request, params }, toComponent, toErrorBoundary) => {
+  async ({ context, request, params }, { succeed, redirect, fail }) => {
     // ... Same as the loader
   }
 );
@@ -162,6 +162,7 @@ import { buildStrongRoute } from "remix-strong-routes";
 
 // Build strongly typed route exports
 const route = buildStrongRoute<LoaderResponse>({
+  routeId: "root",
   loader: strongLoader,
   action: strongAction,
   Component: strongComponent,
@@ -173,6 +174,36 @@ export const action = route.action;
 export const loader = route.loader;
 export const ErrorBoundary = route.ErrorBoundary;
 export default route.Component;
+```
+
+### Call Another Route's Loader
+
+This library uses `buildStrongRoute` to expose a more ergonomic `useRouteLoaderData` hook, which is a wrapper around the default Remix `useRouteLoaderData` hook. There are no guardrails in place within `remix-strong-routes` to enforce a route's parent-child relationship so it may be a defect if your application is not setup correctly. This may be improved when Remix exposes its route configurations under the hood.
+
+The purpose of this hook is to prevent the need to remember a route's ID more than one time.
+
+```tsx
+import { buildStrongRoute } from "remix-strong-routes";
+
+// Build strongly typed route exports
+const route1 = buildStrongRoute<LoaderResponse>({
+  // This routeId MUST be precisely what Remix expects
+  routeId: "root",
+  loader: strongLoader,
+  action: strongAction,
+  Component: strongComponent,
+  ErrorBoundary: strongErrorBoundary,
+});
+
+const route2 = buildStrongRoute<LoaderResponse>({
+  routeId: "routes/home",
+  Component: () => {
+    // If route1.routeId is not accurate, this will fail.
+    const route1Data = route1.useRouteLoaderData();
+
+    return <pre>{JSON.stringify(route1Data, null, 2)}</pre>;
+  },
+});
 ```
 
 ## Contributing

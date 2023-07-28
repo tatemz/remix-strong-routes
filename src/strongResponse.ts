@@ -1,15 +1,15 @@
-import { HttpStatusCode } from "./HttpStatusCode";
+import { HttpStatusCode, NonRedirectStatus } from "./HttpStatusCode";
 import { StrongResponse } from "./types";
 
 export const strongResponse = <
-  T extends StrongResponse<unknown, HttpStatusCode>
+  T extends StrongResponse<unknown, NonRedirectStatus>
 >(
   strongResponse: T
 ): Response => {
-  const headers = new Headers(strongResponse?.headers);
-  headers.set("content-type", "application/json");
+  const { data, headers: _headers, ...init } = strongResponse;
 
-  const { data, ...init } = strongResponse;
+  const headers = new Headers(_headers);
+  headers.set("content-type", "application/json");
 
   return new Response(
     JSON.stringify({

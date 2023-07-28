@@ -1,0 +1,32 @@
+{
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Current Test File",
+      "type": "node",
+      "runtimeExecutable": "npm",
+      "runtimeVersion": "18.16.0",
+      "request": "launch",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "runtimeArgs": ["run", "test:watch", "--", "${relativeFile}"],
+      "console": "internalConsole",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "Debug All Tests",
+      "type": "node",
+      "runtimeExecutable": "npm",
+      "runtimeVersion": "18.16.0",
+      "request": "launch",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "runtimeArgs": ["run", "test:watch"],
+      "console": "internalConsole",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

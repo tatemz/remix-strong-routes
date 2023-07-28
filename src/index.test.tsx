@@ -1,13 +1,13 @@
+import { Form, Outlet, useLoaderData } from "@remix-run/react";
 import {
   ActionFunction,
   DataFunctionArgs,
   LoaderFunction,
 } from "@remix-run/server-runtime";
 import { unstable_createRemixStub } from "@remix-run/testing";
-import { act, render } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import "isomorphic-fetch";
-import { ComponentType } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   HttpStatusCode,
   StrongComponent,
@@ -16,10 +16,9 @@ import {
   StrongResponse,
   buildStrongRoute,
 } from "./";
-import { strongResponse } from "./strongResponse";
-import { Form } from "@remix-run/react";
-import { strongLoader } from "./strongLoader";
 import { strongAction } from "./strongAction";
+import { strongLoader } from "./strongLoader";
+import { strongResponse } from "./strongResponse";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -81,32 +80,32 @@ describe("buildStrongRoute", () => {
   };
 
   const loader = strongLoader<BarResponse, FooResponse, RedirectResponse>(
-    async ({ request }, toComponent, toErrorBoundary) => {
+    async ({ request }, { succeed, redirect, fail }) => {
       const url = new URL(request.url);
-      if (url.pathname === "/bar") {
-        return toErrorBoundary(barResponse);
+      if (url.searchParams.has("fail")) {
+        return fail(barResponse);
       }
 
-      if (url.pathname === "/foo") {
-        return toComponent(fooResponse);
+      if (url.searchParams.has("succeed")) {
+        return succeed(fooResponse);
       }
 
-      return redirectResponse;
+      return redirect(redirectResponse);
     }
   );
 
   const action = strongAction<BarResponse, FooResponse, RedirectResponse>(
-    async ({ request }, toComponent, toErrorBoundary) => {
+    async ({ request }, { succeed, redirect, fail }) => {
       const url = new URL(request.url);
-      if (url.pathname === "/bar") {
-        return toErrorBoundary(barResponse);
+      if (url.searchParams.has("fail")) {
+        return fail(barResponse);
       }
 
-      if (url.pathname === "/foo") {
-        return toComponent(fooResponse);
+      if (url.searchParams.has("succeed")) {
+        return succeed(fooResponse);
       }
 
-      return redirectResponse;
+      return redirect(redirectResponse);
     }
   );
 
@@ -116,7 +115,8 @@ describe("buildStrongRoute", () => {
         <Form method="post" data-testid="form">
           <button type="submit">Go</button>
         </Form>
-        <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>;
+        <pre data-testid="success">{JSON.stringify(props, null, 2)}</pre>
+        <Outlet />
       </>
     );
   };
@@ -125,7 +125,8 @@ describe("buildStrongRoute", () => {
     return <pre data-testid="failure">{JSON.stringify(props, null, 2)}</pre>;
   };
 
-  const route = buildStrongRoute({
+  const route1 = buildStrongRoute({
+    routeId: "root",
     Component,
     ErrorBoundary,
     loader,
@@ -134,6 +135,7 @@ describe("buildStrongRoute", () => {
 
   // TODO - add test cases for routeWithoutAction
   buildStrongRoute({
+    routeId: "foo",
     Component,
     ErrorBoundary,
     loader,
@@ -141,22 +143,24 @@ describe("buildStrongRoute", () => {
 
   // TODO - add test cases for routeWithoutLoaderOrAction
   buildStrongRoute({
+    routeId: "foo",
     Component: () => <></>,
     ErrorBoundary: () => <></>,
   });
 
   // TODO - add test cases for routeWithoutLoader
   buildStrongRoute({
+    routeId: "foo",
     Component,
     ErrorBoundary,
-    loader,
   });
 
+  afterEach(cleanup);
   describe("loader", () => {
     describe("when the loader succeeds", () => {
       it("should return a strongResponse using the error tuple", async () => {
-        const request = new Request("http://test.com/foo");
-        const result = await (route.loader as LoaderFunction)({
+        const request = new Request("http://localhost?succeed");
+        const result = await (route1.loader as LoaderFunction)({
           request,
         } as DataFunctionArgs);
         const expected = strongResponse(fooResponse);
@@ -171,11 +175,13 @@ describe("buildStrongRoute", () => {
 
     describe("when the loader fails", () => {
       it("should throw a strongResponse using the error tuple", async () => {
-        const request = new Request("http://test.com/bar");
+        const request = new Request("http://localhost?fail");
         const result: Response = await new Promise((resolve, reject) => {
-          (route.loader as LoaderFunction)({ request } as DataFunctionArgs)
+          (route1.loader as LoaderFunction)({ request } as DataFunctionArgs)
             .then(reject)
-            .catch(resolve);
+            .catch((e: any) => {
+              resolve(e);
+            });
         });
 
         const expected = strongResponse(barResponse);
@@ -190,8 +196,8 @@ describe("buildStrongRoute", () => {
 
     describe("when the loader redirects", () => {
       it("should return a redirect response", async () => {
-        const request = new Request("http://test.com/");
-        const result = await (route.loader as LoaderFunction)({
+        const request = new Request("http://localhost");
+        const result = await (route1.loader as LoaderFunction)({
           request,
         } as DataFunctionArgs);
 
@@ -212,8 +218,8 @@ describe("buildStrongRoute", () => {
   describe("action", () => {
     describe("when the action succeeds", () => {
       it("should return a strongResponse using the error tuple", async () => {
-        const request = new Request("http://test.com/foo");
-        const result = await (route.action as ActionFunction)({
+        const request = new Request("http://localhost?succeed");
+        const result = await (route1.action as ActionFunction)({
           request,
         } as DataFunctionArgs);
         const expected = strongResponse(fooResponse);
@@ -228,9 +234,9 @@ describe("buildStrongRoute", () => {
 
     describe("when the action fails", () => {
       it("should throw a strongResponse using the error tuple", async () => {
-        const request = new Request("http://test.com/bar");
+        const request = new Request("http://localhost?fail");
         const result: Response = await new Promise((resolve, reject) => {
-          (route.action as ActionFunction)({ request } as DataFunctionArgs)
+          (route1.action as ActionFunction)({ request } as DataFunctionArgs)
             .then(reject)
             .catch(resolve);
         });
@@ -247,8 +253,8 @@ describe("buildStrongRoute", () => {
 
     describe("when the action redirects", () => {
       it("should return a redirect response", async () => {
-        const request = new Request("http://test.com/");
-        const result = await (route.action as ActionFunction)({
+        const request = new Request("http://localhost/");
+        const result = await (route1.action as ActionFunction)({
           request,
         } as DataFunctionArgs);
 
@@ -268,21 +274,87 @@ describe("buildStrongRoute", () => {
 
   describe("Component", () => {
     it("should load and render strongly typed data", async () => {
-      const TestComponent = route.Component as ComponentType;
       const RemixStub = unstable_createRemixStub([
         {
-          path: "/foo",
-          index: true,
-          element: <TestComponent />,
-          loader: route.loader as any,
+          path: "/",
+          id: route1.routeId,
+          loader: route1.loader,
+          action: route1.action,
+          Component: route1.Component,
+          ErrorBoundary: route1.ErrorBoundary,
         },
       ]);
 
-      const { findByTestId } = render(<RemixStub initialEntries={["/foo"]} />);
-      const element = await findByTestId("success");
+      render(
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+      );
+      const element = await screen.findByTestId("success");
       expect(element).toMatchInlineSnapshot(`
         <pre
           data-testid="success"
+        >
+          {
+          "status": 200,
+          "data": "Foo"
+        }
+        </pre>
+      `);
+    });
+
+    it("should be able to call parent loaders", async () => {
+      const route2 = buildStrongRoute({
+        routeId: "/",
+        Component: () => {
+          const route1Data = route1.useRouteLoaderData();
+
+          return (
+            <pre data-testid="childSuccess">
+              {JSON.stringify(route1Data, null, 2)}
+            </pre>
+          );
+        },
+      });
+
+      const RemixStub = unstable_createRemixStub([
+        {
+          id: route1.routeId,
+          loader: route1.loader,
+          action: route1.action,
+          Component: route1.Component,
+          ErrorBoundary: route1.ErrorBoundary,
+          children: [
+            {
+              path: "/",
+              index: true,
+              loader: route2.loader as any,
+              action: route2.action as any,
+              Component: route2.Component,
+              ErrorBoundary: route2.ErrorBoundary,
+            },
+          ],
+        },
+      ]);
+
+      render(
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+      );
+
+      const route1Data = await screen.findByTestId("success");
+      expect(route1Data).toMatchInlineSnapshot(`
+        <pre
+          data-testid="success"
+        >
+          {
+          "status": 200,
+          "data": "Foo"
+        }
+        </pre>
+      `);
+
+      const route2Data = await screen.findByTestId("childSuccess");
+      expect(route2Data).toMatchInlineSnapshot(`
+        <pre
+          data-testid="childSuccess"
         >
           {
           "status": 200,
@@ -295,21 +367,21 @@ describe("buildStrongRoute", () => {
 
   describe("ErrorBoundary", () => {
     it("should load and render strongly typed data for error boundaries", async () => {
-      const TestComponent = route.Component as ComponentType;
-      const TestErrorBoundary = route.ErrorBoundary as ComponentType;
       const RemixStub = unstable_createRemixStub([
         {
-          path: "/bar",
-          index: true,
-          element: <TestComponent />,
-          errorElement: <TestErrorBoundary />,
-          hasErrorBoundary: true,
-          loader: route.loader as any,
+          path: "/",
+          id: route1.routeId,
+          loader: route1.loader,
+          action: route1.action,
+          Component: route1.Component,
+          ErrorBoundary: route1.ErrorBoundary,
         },
       ]);
 
-      const { findByTestId } = render(<RemixStub initialEntries={["/bar"]} />);
-      const element = await findByTestId("failure");
+      render(
+        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />
+      );
+      const element = await screen.findByTestId("failure");
 
       expect(element).toMatchInlineSnapshot(`
         <pre
@@ -330,31 +402,28 @@ describe("buildStrongRoute", () => {
 
     // TODO - Learn how remix actions handle failure
     it.skip("should render error boundary for failed actions", async () => {
-      const TestComponent = route.Component as ComponentType;
-      const TestErrorBoundary = route.ErrorBoundary as ComponentType;
       const RemixStub = unstable_createRemixStub([
         {
-          path: "/foo",
-          index: true,
-          element: <TestComponent />,
-          errorElement: <TestErrorBoundary />,
-          hasErrorBoundary: true,
-          loader: () => null,
-          action: route.action as any,
+          path: "/",
+          id: route1.routeId,
+          loader: route1.loader,
+          action: route1.action,
+          Component: route1.Component,
+          ErrorBoundary: route1.ErrorBoundary,
         },
       ]);
 
-      const { container, findByTestId } = render(
-        <RemixStub initialEntries={["/foo"]} />
+      const { container } = render(
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
       );
-      const element = (await findByTestId("form")) as HTMLFormElement;
+      const element = (await screen.findByTestId("form")) as HTMLFormElement;
 
       act(() => element.submit());
 
       expect(container).toMatchInlineSnapshot(`
         <div>
           <form
-            action="/foo?index"
+            action="/?index&fail"
             data-testid="form"
             method="post"
           >
@@ -369,7 +438,6 @@ describe("buildStrongRoute", () => {
           >
             {}
           </pre>
-          ;
         </div>
       `);
     });
