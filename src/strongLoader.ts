@@ -1,6 +1,12 @@
-import { DataFunctionArgs, LoaderFunction } from "@remix-run/server-runtime";
+import { DataFunctionArgs } from "@remix-run/server-runtime";
 import { NonRedirectStatus, RedirectStatus } from "./HttpStatusCode";
-import { StrongLoader, StrongRedirect, StrongResponse } from "./types";
+import {
+  BrandedDataFunction,
+  StrongLoader,
+  StrongRedirect,
+  StrongResponse,
+} from "./types";
+import { Effect } from "effect";
 
 export const strongLoader =
   <
@@ -9,6 +15,10 @@ export const strongLoader =
     Redirect extends StrongRedirect<string, RedirectStatus> = never,
   >(
     loaderFn: StrongLoader<Failure, Success, Redirect>,
-  ): LoaderFunction =>
+  ): BrandedDataFunction<Failure, Success, Redirect> =>
   (args: DataFunctionArgs) =>
-    loaderFn(args);
+    loaderFn(args, {
+      fail: Effect.fail,
+      succeed: Effect.succeed,
+      redirect: Effect.succeed,
+    });

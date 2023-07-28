@@ -17,6 +17,21 @@ import {
   RedirectStatus,
 } from "./HttpStatusCode";
 
+export type BrandedDataFunction<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Failure extends StrongResponse<unknown, NonRedirectStatus>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Success extends StrongResponse<unknown, NonRedirectStatus>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Redirect extends StrongRedirect<string, RedirectStatus>,
+> = LoaderFunction & {
+  __brand?: {
+    Failure: Failure;
+    Success: Success;
+    Redirect: Redirect;
+  };
+};
+
 export interface _StrongResponse<T, S extends HttpStatusCode>
   extends ResponseInit {
   data: T;
@@ -37,12 +52,27 @@ export type PickDataAndStatus<T> = T extends StrongResponse<
   ? { data: T["data"]; status: T["status"] }
   : NonNullable<unknown>;
 
+export type StrongCallbacks<
+  Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
+  Success extends StrongResponse<unknown, NonRedirectStatus> = never,
+  Redirect extends StrongRedirect<string, RedirectStatus> = never,
+> = {
+  fail: (failure: Failure) => Effect.Effect<never, Failure, Success | Redirect>;
+  succeed: (
+    success: Success,
+  ) => Effect.Effect<never, Failure, Success | Redirect>;
+  redirect: (
+    redirect: Redirect,
+  ) => Effect.Effect<never, Failure, Success | Redirect>;
+};
+
 export type StrongLoader<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: LoaderArgs,
+  callbacks: StrongCallbacks<Failure, Success, Redirect>,
 ) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
 
 export type StrongAction<
@@ -51,6 +81,7 @@ export type StrongAction<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: ActionArgs,
+  callbacks: StrongCallbacks<Failure, Success, Redirect>,
 ) => Promise<Effect.Effect<never, Failure, Success | Redirect>>;
 
 export type StrongComponent<
@@ -70,8 +101,8 @@ export type BuildStrongRemixRouteExportsOpts<
   ActionRedirect extends StrongRedirect<string, RedirectStatus> = never,
 > = {
   routeId: string;
-  loader?: StrongLoader<LoaderFailure, LoaderSuccess, LoaderRedirect>;
-  action?: StrongAction<ActionFailure, ActionSuccess, ActionRedirect>;
+  loader?: BrandedDataFunction<LoaderFailure, LoaderSuccess, LoaderRedirect>;
+  action?: BrandedDataFunction<ActionFailure, ActionSuccess, ActionRedirect>;
   Component?: StrongComponent<LoaderSuccess>;
   ErrorBoundary?: StrongErrorBoundary<LoaderFailure | ActionFailure>;
 };

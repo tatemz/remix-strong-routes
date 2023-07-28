@@ -12,18 +12,15 @@ import "isomorphic-fetch";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   HttpStatusCode,
-  StrongAction,
   StrongComponent,
   StrongErrorBoundary,
-  StrongLoader,
   StrongRedirect,
   StrongResponse,
   buildStrongRoute,
-  fail,
-  redirect,
-  succeed,
 } from "./";
 import { strongResponse } from "./strongResponse";
+import { strongLoader } from "./strongLoader";
+import { strongAction } from "./strongAction";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -85,11 +82,11 @@ describe("buildStrongRoute", () => {
     status: HttpStatusCode.MOVED_PERMANENTLY,
   };
 
-  const loader: StrongLoader<
+  const loader = strongLoader<
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  > = async ({ request }) => {
+  >(async ({ request }, { fail, succeed, redirect }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
       return fail(barResponse);
@@ -100,13 +97,13 @@ describe("buildStrongRoute", () => {
     }
 
     return redirect(redirectResponse);
-  };
+  });
 
-  const action: StrongAction<
+  const action = strongAction<
     BarResponse,
     FooResponse | BazResponse,
     RedirectResponse
-  > = async ({ request }) => {
+  >(async ({ request }, { fail, succeed, redirect }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
       return fail(barResponse);
@@ -117,7 +114,7 @@ describe("buildStrongRoute", () => {
     }
 
     return redirect(redirectResponse);
-  };
+  });
 
   const Component: StrongComponent<FooResponse | BazResponse> = (props) => {
     if (props.status === HttpStatusCode.ACCEPTED) return null;
