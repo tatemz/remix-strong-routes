@@ -12,5 +12,4 @@ export {
   NonRedirectStatus as NonRedirectStatusCode,
   RedirectStatus as RedirectStatusCode,
 } from "./HttpStatusCode";
-export { strongLoader } from "./strongLoader";
-export { strongAction } from "./strongAction";
+export * from "./effects";

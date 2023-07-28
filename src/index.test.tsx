@@ -8,7 +8,6 @@ import {
 } from "@remix-run/server-runtime";
 import { unstable_createRemixStub } from "@remix-run/testing";
 import { act, cleanup, render, screen } from "@testing-library/react";
-import { Effect } from "effect";
 import "isomorphic-fetch";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -20,6 +19,9 @@ import {
   StrongRedirect,
   StrongResponse,
   buildStrongRoute,
+  fail,
+  redirect,
+  succeed,
 } from "./";
 import { strongResponse } from "./strongResponse";
 
@@ -90,14 +92,14 @@ describe("buildStrongRoute", () => {
   > = async ({ request }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
-      return Effect.fail(barResponse);
+      return fail(barResponse);
     }
 
     if (url.searchParams.has("succeed")) {
-      return Effect.succeed(fooResponse);
+      return succeed(fooResponse);
     }
 
-    return Effect.succeed(redirectResponse);
+    return redirect(redirectResponse);
   };
 
   const action: StrongAction<
@@ -107,14 +109,14 @@ describe("buildStrongRoute", () => {
   > = async ({ request }) => {
     const url = new URL(request.url);
     if (url.searchParams.has("fail")) {
-      return Effect.fail(barResponse);
+      return fail(barResponse);
     }
 
     if (url.searchParams.has("succeed")) {
-      return Effect.succeed(fooResponse);
+      return succeed(fooResponse);
     }
 
-    return Effect.succeed(redirectResponse);
+    return redirect(redirectResponse);
   };
 
   const Component: StrongComponent<FooResponse | BazResponse> = (props) => {

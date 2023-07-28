@@ -41,9 +41,9 @@ npm install remix-strong-routes
 
 There are 3 possible options when returning data in a `StrongLoader` or `StrongAction`
 
-- Send data to your component with the `succeed` callback
-- Send data to your error boundary with the `fail` callback.
-- Perform an HTTP redirect using the `redirect` callback
+- Send data to your component with the `succeed` helper
+- Send data to your error boundary with the `fail` helper.
+- Perform an HTTP redirect using the `redirect` helper
 
 ### Uncaught Errors
 
@@ -71,56 +71,60 @@ type RedirectToLogin = StrongRedirect<
 ### Define Loader
 
 ```ts
-import { strongLoader, toSuccess, toError } from "remix-strong-routes";
+import { StrongLoader, succeed, fail, redirect } from "remix-strong-routes";
 
-const loader = strongLoader<BarResponse, FooResponse, RedirectToLogin>(
-  async ({ context, request, params }, { succeed, redirect, fail }) => {
-    // Try to validate a session
-    if (await isUserLoggedIn(request)) {
-      // Return a redirect object
-      const redirectToLogin: RedirectToLogin = {
-        data: "/login",
-        status: HttpStatusCode.MOVED_PERMANENTLY,
-      };
-      return redirect(redirectToLogin);
-    }
+const loader: StrongLoader<BarResponse, FooResponse, RedirectToLogin> = async ({
+  context,
+  request,
+  params,
+}) => {
+  // Try to validate a session
+  if (await isUserLoggedIn(request)) {
+    // Return a redirect object
+    const redirectToLogin: RedirectToLogin = {
+      data: "/login",
+      status: HttpStatusCode.MOVED_PERMANENTLY,
+    };
+    return redirect(redirectToLogin);
+  }
 
-    try {
-      // Try to load some data
-      const fooData = await getFooData();
+  try {
+    // Try to load some data
+    const fooData = await getFooData();
 
-      // Build a typesafe response object
-      const fooResponse: FooResponse = {
-        data: fooData,
-        status: HttpStatusCode.OK,
-      };
+    // Build a typesafe response object
+    const fooResponse: FooResponse = {
+      data: fooData,
+      status: HttpStatusCode.OK,
+    };
 
-      // Return a type safe error tuple indicating success
-      return succeed(fooResponse);
-    } catch (e) {
-      // Build a typesafe response object
-      const barResponse: BarResponse = {
-        data: "Bar",
-        status: HttpStatusCode.INTERNAL_SERVER_ERROR,
-      };
+    // Return a type safe error tuple indicating success
+    return succeed(fooResponse);
+  } catch (e) {
+    // Build a typesafe response object
+    const barResponse: BarResponse = {
+      data: "Bar",
+      status: HttpStatusCode.INTERNAL_SERVER_ERROR,
+    };
 
-      // Return a type safe error tuple indicating failure
-      return fail(barResponse);
-    }
-  },
-);
+    // Return a type safe error tuple indicating failure
+    return fail(barResponse);
+  }
+};
 ```
 
 ### Define Action
 
 ```ts
-import { strongAction } from "remix-strong-routes";
+import { StrongAction, succeed, fail, redirect } from "remix-strong-routes";
 
-const action = strongAction<BarResponse, FooResponse, RedirectToLogin>(
-  async ({ context, request, params }, { succeed, redirect, fail }) => {
-    // ... Same as the loader
-  },
-);
+const action: StrongAction<BarResponse, FooResponse, RedirectToLogin> = async ({
+  context,
+  request,
+  params,
+}) => {
+  // ... Same as the loader
+};
 ```
 
 ### Define Route Component
