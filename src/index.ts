@@ -2,8 +2,8 @@ export { buildStrongRoute } from "./buildStrongRoute";
 export {
   StrongResponse,
   StrongRedirect,
-  StrongLoader,
-  StrongAction,
+  StrongLoaderWithCallbacks as StrongLoader,
+  StrongActionWithCallbacks as StrongAction,
   StrongComponent,
   StrongErrorBoundary,
 } from "./types";
