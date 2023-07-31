@@ -17,10 +17,10 @@ import {
   StrongRedirect,
   StrongResponse,
   buildStrongRoute,
+  strongAction,
+  strongLoader,
 } from "./";
 import { strongResponse } from "./strongResponse";
-import { strongLoader } from "./strongLoader";
-import { strongAction } from "./strongAction";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {

@@ -1,6 +1,6 @@
 import { useRouteLoaderData } from "@remix-run/react";
 import { DataFunctionArgs, redirect } from "@remix-run/server-runtime";
-import { Effect, Exit, pipe } from "effect";
+import { Cause, Effect, Either, Exit } from "effect";
 import { createElement } from "react";
 import {
   HttpStatusCode,
@@ -55,19 +55,14 @@ const handleDataFunctionForRemix = async <
     | StrongAction<Failure, Success, Redirect>,
   args: DataFunctionArgs,
 ) => {
-  const resultEffect = (await dataFunction(args)) as Effect.Effect<
-    never,
-    Failure,
-    Success | Redirect
-  >;
+  const resultEither = await dataFunction(args);
 
-  const finalEffect = pipe(
-    resultEffect,
-    Effect.mapError(strongResponse),
-    Effect.map(handleSuccessForRemix),
-  );
+  const result = Either.mapBoth(resultEither, {
+    onLeft: strongResponse,
+    onRight: handleSuccessForRemix,
+  });
 
-  const exit = Effect.runSyncExit(finalEffect);
+  const exit = Effect.runSyncExit(result);
 
   return returnOrThrowExitFailure(exit);
 };
@@ -75,8 +70,9 @@ const handleDataFunctionForRemix = async <
 const returnOrThrowExitFailure = (exit: Exit.Exit<Response, Response>) =>
   Exit.match(exit, {
     onFailure: (err) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      throw (err as any).error;
+      if (Cause.isFailType(err)) {
+        throw err.error;
+      }
     },
     onSuccess: (data) => data,
   });
