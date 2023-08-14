@@ -92,8 +92,9 @@ export type BuildStrongRemixRouteExportsOpts<
   LoaderRedirect extends StrongRedirect<string, RedirectStatus> = never,
   ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   ActionRedirect extends StrongRedirect<string, RedirectStatus> = never,
+  RouteId extends string = string,
 > = {
-  routeId: string;
+  routeId: RouteId;
   loader?: StrongLoader<LoaderFailure, LoaderSuccess, LoaderRedirect>;
   action?: StrongAction<ActionFailure, ActionSuccess, ActionRedirect>;
   Component?: StrongComponent<LoaderSuccess>;

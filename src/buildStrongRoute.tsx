@@ -84,6 +84,7 @@ export const buildStrongRoute = <
   LoaderRedirect extends StrongRedirect<string, RedirectStatus> = never,
   ActionFailure extends StrongResponse<unknown, NonRedirectStatus> = never,
   ActionRedirect extends StrongRedirect<string, RedirectStatus> = never,
+  RouteId extends string = string,
 >(
   opts: BuildStrongRemixRouteExportsOpts<
     LoaderSuccess,
@@ -91,7 +92,8 @@ export const buildStrongRoute = <
     LoaderFailure,
     LoaderRedirect,
     ActionFailure,
-    ActionRedirect
+    ActionRedirect,
+    RouteId
   >,
 ): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
   const { loader, action, Component, ErrorBoundary } = opts;
