@@ -96,7 +96,7 @@ export const buildStrongRoute = <
     RouteId
   >,
 ): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
-  const { loader, action, Component, ErrorBoundary } = opts;
+  const { loader, action, Component, ErrorBoundary, meta } = opts;
   const output = {} as StrongRemixRouteExports<typeof opts, LoaderSuccess>;
 
   if (loader) {
@@ -105,6 +105,10 @@ export const buildStrongRoute = <
 
   if (action) {
     output["action"] = async (args) => handleDataFunctionForRemix(action, args);
+  }
+
+  if (meta) {
+    output["meta"] = (args) => meta(args);
   }
 
   if (Component) {
