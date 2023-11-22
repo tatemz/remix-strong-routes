@@ -21,6 +21,7 @@ import {
   strongLoader,
 } from "./";
 import { strongResponse } from "./strongResponse";
+import { StrongMeta } from "./types";
 
 describe("strongResponse", () => {
   it("should create and format a response with a data object and status code", async () => {
@@ -116,6 +117,14 @@ describe("buildStrongRoute", () => {
     return redirect(redirectResponse);
   });
 
+  const meta: StrongMeta<FooResponse | BazResponse> = ({ data }) => {
+    if (data) {
+      console.log(data.data);
+    }
+
+    return [];
+  };
+
   const Component: StrongComponent<FooResponse | BazResponse> = (props) => {
     if (props.status === HttpStatusCode.ACCEPTED) return null;
 
@@ -142,6 +151,7 @@ describe("buildStrongRoute", () => {
     ErrorBoundary,
     loader,
     action,
+    meta,
   });
 
   // TODO - add test cases for routeWithoutAction
@@ -454,6 +464,13 @@ describe("buildStrongRoute", () => {
           </pre>
         </div>
       `);
+    });
+  });
+
+  describe("meta", () => {
+    it("should return a empty aray", async () => {
+      const res = (route1 as any).meta({ data: {} } as any);
+      expect(res).toStrictEqual([]);
     });
   });
 });
