@@ -2,10 +2,13 @@ import { V2_MetaFunction } from "@remix-run/react";
 import {
   RouteComponent,
   V2_ErrorBoundaryComponent,
+  V2_MetaArgs,
+  V2_MetaDescriptor,
 } from "@remix-run/react/dist/routeModules";
 import {
   ActionArgs,
   ActionFunction,
+  DataFunctionArgs,
   LoaderArgs,
   LoaderFunction,
 } from "@remix-run/server-runtime";
@@ -53,6 +56,12 @@ export type StrongLoader<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (args: LoaderArgs) => Promise<Either.Either<Failure, Success | Redirect>>;
 
+export type StrongMeta<
+  Success extends StrongResponse<unknown, NonRedirectStatus> = never,
+> = (
+  args: V2_MetaArgs<(args: DataFunctionArgs) => Promise<Success>>,
+) => V2_MetaDescriptor[];
+
 export type StrongAction<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
@@ -99,6 +108,7 @@ export type BuildStrongRemixRouteExportsOpts<
   action?: StrongAction<ActionFailure, ActionSuccess, ActionRedirect>;
   Component?: StrongComponent<LoaderSuccess>;
   ErrorBoundary?: StrongErrorBoundary<LoaderFailure | ActionFailure>;
+  meta?: StrongMeta<LoaderSuccess>;
 };
 
 export type StrongRemixRouteExports<
