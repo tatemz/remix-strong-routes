@@ -6,10 +6,10 @@ import {
   DataFunctionArgs,
   LoaderFunction,
 } from "@remix-run/server-runtime";
-import { unstable_createRemixStub } from "@remix-run/testing";
+import { createRemixStub } from "@remix-run/testing";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import "isomorphic-fetch";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, assert, describe, expect, it } from "vitest";
 import {
   HttpStatusCode,
   StrongComponent,
@@ -219,6 +219,7 @@ describe("buildStrongRoute", () => {
           }),
         });
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);
@@ -236,6 +237,7 @@ describe("buildStrongRoute", () => {
         const expected = strongResponse(fooResponse);
         const expectedBody = await expected.json();
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);
@@ -276,6 +278,7 @@ describe("buildStrongRoute", () => {
           }),
         });
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);
@@ -285,7 +288,7 @@ describe("buildStrongRoute", () => {
 
   describe("Component", () => {
     it("should load and render strongly typed data", async () => {
-      const RemixStub = unstable_createRemixStub([
+      const RemixStub = createRemixStub([
         {
           path: "/",
           id: route1.routeId,
@@ -297,7 +300,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
       );
       const element = await screen.findByTestId("success");
       expect(element).toMatchInlineSnapshot(`
@@ -326,7 +329,7 @@ describe("buildStrongRoute", () => {
         },
       });
 
-      const RemixStub = unstable_createRemixStub([
+      const RemixStub = createRemixStub([
         {
           id: route1.routeId,
           loader: route1.loader,
@@ -347,7 +350,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
       );
 
       const route1Data = await screen.findByTestId("success");
@@ -378,7 +381,7 @@ describe("buildStrongRoute", () => {
 
   describe("ErrorBoundary", () => {
     it("should load and render strongly typed data for error boundaries", async () => {
-      const RemixStub = unstable_createRemixStub([
+      const RemixStub = createRemixStub([
         {
           path: "/",
           id: route1.routeId,
@@ -390,7 +393,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />,
+        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />
       );
       const element = await screen.findByTestId("failure");
 
@@ -413,7 +416,7 @@ describe("buildStrongRoute", () => {
 
     // TODO - Learn how remix actions handle failure
     it.skip("should render error boundary for failed actions", async () => {
-      const RemixStub = unstable_createRemixStub([
+      const RemixStub = createRemixStub([
         {
           path: "/",
           id: route1.routeId,
@@ -425,7 +428,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       const { container } = render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
       );
       const element = (await screen.findByTestId("form")) as HTMLFormElement;
 

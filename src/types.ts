@@ -1,15 +1,15 @@
-import { V2_MetaFunction } from "@remix-run/react";
+import { MetaFunction } from "@remix-run/react";
 import {
   RouteComponent,
-  V2_ErrorBoundaryComponent,
+  ErrorBoundaryComponent,
 } from "@remix-run/react/dist/routeModules";
 import {
-  ActionArgs,
+  ActionFunctionArgs,
   ActionFunction,
-  LoaderArgs,
+  LoaderFunctionArgs,
   LoaderFunction,
 } from "@remix-run/server-runtime";
-import { Either } from "effect";
+import { Effect, Either } from "effect";
 import { ComponentType } from "react";
 import {
   HttpStatusCode,
@@ -42,30 +42,38 @@ export type StrongCallbacks<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = {
-  fail: (failure: Failure) => Either.Either<Failure, Success | Redirect>;
-  succeed: (success: Success) => Either.Either<Failure, Success | Redirect>;
-  redirect: (redirect: Redirect) => Either.Either<Failure, Success | Redirect>;
+  fail: (failure: Failure) => Effect.Effect<never, Failure, Success | Redirect>;
+  succeed: (
+    success: Success
+  ) => Effect.Effect<never, Failure, Success | Redirect>;
+  redirect: (
+    redirect: Redirect
+  ) => Effect.Effect<never, Failure, Success | Redirect>;
 };
 
 export type StrongLoader<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
-> = (args: LoaderArgs) => Promise<Either.Either<Failure, Success | Redirect>>;
+> = (
+  args: LoaderFunctionArgs
+) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongAction<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
-> = (args: ActionArgs) => Promise<Either.Either<Failure, Success | Redirect>>;
+> = (
+  args: ActionFunctionArgs
+) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongLoaderWithCallbacks<
   Failure extends StrongResponse<unknown, NonRedirectStatus> = never,
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
-  args: LoaderArgs,
-  callbacks: StrongCallbacks<Failure, Success, Redirect>,
+  args: LoaderFunctionArgs,
+  callbacks: StrongCallbacks<Failure, Success, Redirect>
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongActionWithCallbacks<
@@ -73,8 +81,8 @@ export type StrongActionWithCallbacks<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
-  args: ActionArgs,
-  callbacks: StrongCallbacks<Failure, Success, Redirect>,
+  args: ActionFunctionArgs,
+  callbacks: StrongCallbacks<Failure, Success, Redirect>
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongComponent<
@@ -112,9 +120,9 @@ export type StrongRemixRouteExports<
     : K extends "Component"
     ? RouteComponent
     : K extends "ErrorBoundary"
-    ? V2_ErrorBoundaryComponent
+    ? ErrorBoundaryComponent
     : K extends "meta"
-    ? V2_MetaFunction
+    ? MetaFunction
     : K extends "routeId"
     ? T[K]
     : never;
