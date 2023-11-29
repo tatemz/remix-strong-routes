@@ -3,6 +3,7 @@
 import { Form, Outlet } from "@remix-run/react";
 import {
   ActionFunction,
+  ActionFunctionArgs,
   DataFunctionArgs,
   LoaderFunction,
 } from "@remix-run/server-runtime";
@@ -187,6 +188,7 @@ describe("buildStrongRoute", () => {
         const expected = strongResponse(fooResponse);
         const expectedBody = await expected.json();
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);
@@ -197,17 +199,20 @@ describe("buildStrongRoute", () => {
     describe("when the loader fails", () => {
       it("should throw a strongResponse using the error tuple", async () => {
         const request = new Request("http://localhost?fail");
-        const result: Response = await new Promise((resolve, reject) => {
-          (route1.loader as LoaderFunction)({ request } as DataFunctionArgs)
-            .then(reject)
-            .catch((e: Response) => {
-              resolve(e);
-            });
+        const result = await new Promise((resolve, reject) => {
+          const p = (route1.loader as LoaderFunction)({
+            request,
+          } as DataFunctionArgs) as Promise<unknown>;
+
+          return p.then(reject).catch((e: Response) => {
+            resolve(e);
+          });
         });
 
         const expected = strongResponse(barResponse);
         const expectedBody = await expected.json();
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);
@@ -258,15 +263,18 @@ describe("buildStrongRoute", () => {
     describe("when the action fails", () => {
       it("should throw a strongResponse using the error tuple", async () => {
         const request = new Request("http://localhost?fail");
-        const result: Response = await new Promise((resolve, reject) => {
-          (route1.action as ActionFunction)({ request } as DataFunctionArgs)
-            .then(reject)
-            .catch(resolve);
+        const result = await new Promise((resolve, reject) => {
+          const p = (route1.action as ActionFunction)({
+            request,
+          } as ActionFunctionArgs) as Promise<unknown>;
+
+          return p.then(reject).catch(resolve);
         });
 
         const expected = strongResponse(barResponse);
         const expectedBody = await expected.json();
 
+        assert(result instanceof Response);
         expect(result.status).toStrictEqual(expected.status);
         expect(result.statusText).toStrictEqual(expected.statusText);
         expect(result.headers).toStrictEqual(expected.headers);

@@ -9,3 +9,4 @@ coverage
 vitest.config.ts
 *.tgz
 package
+example-app

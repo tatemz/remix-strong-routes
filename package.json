@@ -41,16 +41,17 @@
   "license": "MIT",
   "dependencies": {},
   "peerDependencies": {
-    "effect": "^2.0.0-next.56",
-    "@remix-run/react": "^2.2.0",
-    "@remix-run/server-runtime": "^2.2.0",
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+    "effect": "2.0.0-next.56",
+    "@remix-run/react": "^2.3.1",
+    "@remix-run/server-runtime": "^2.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@remix-run/testing": "^2.2.0",
+    "@remix-run/testing": "^2.3.1",
     "@testing-library/react": "^14.1.2",
-    "@typescript-eslint/eslint-plugin": "^6.12.0",
-    "@typescript-eslint/parser": "^6.12.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
     "@vitest/coverage-v8": "^0.34.6",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
@@ -65,7 +66,7 @@
     "eslint-plugin-testing-library": "^6.2.0",
     "happy-dom": "^12.10.3",
     "isomorphic-fetch": "^3.0.0",
-    "jsdom": "^22.1.0",
+    "jsdom": "^23.0.0",
     "prettier": "^3.1.0",
     "typescript": "^5.3.2",
     "vitest": "^0.34.6",

@@ -1,18 +1,16 @@
-import { MetaFunction } from "@remix-run/react";
+import { MetaArgs, MetaDescriptor, MetaFunction } from "@remix-run/react";
 import {
-  RouteComponent,
   ErrorBoundaryComponent,
-  MetaArgs,
-  MetaDescriptor,
+  RouteComponent,
 } from "@remix-run/react/dist/routeModules";
 import {
-  ActionFunctionArgs,
   ActionFunction,
-  LoaderFunctionArgs,
+  ActionFunctionArgs,
   DataFunctionArgs,
   LoaderFunction,
+  LoaderFunctionArgs,
 } from "@remix-run/server-runtime";
-import { Effect, Either } from "effect";
+import { Either } from "effect";
 import { ComponentType } from "react";
 import {
   HttpStatusCode,
@@ -45,13 +43,9 @@ export type StrongCallbacks<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = {
-  fail: (failure: Failure) => Effect.Effect<never, Failure, Success | Redirect>;
-  succeed: (
-    success: Success
-  ) => Effect.Effect<never, Failure, Success | Redirect>;
-  redirect: (
-    redirect: Redirect
-  ) => Effect.Effect<never, Failure, Success | Redirect>;
+  fail: (failure: Failure) => Either.Either<Failure, Success | Redirect>;
+  succeed: (success: Success) => Either.Either<Failure, Success | Redirect>;
+  redirect: (redirect: Redirect) => Either.Either<Failure, Success | Redirect>;
 };
 
 export type StrongLoader<
@@ -126,16 +120,16 @@ export type StrongRemixRouteExports<
   [K in keyof T]: K extends "loader"
     ? LoaderFunction
     : K extends "action"
-    ? ActionFunction
-    : K extends "Component"
-    ? RouteComponent
-    : K extends "ErrorBoundary"
-    ? ErrorBoundaryComponent
-    : K extends "meta"
-    ? MetaFunction
-    : K extends "routeId"
-    ? T[K]
-    : never;
+      ? ActionFunction
+      : K extends "Component"
+        ? RouteComponent
+        : K extends "ErrorBoundary"
+          ? ErrorBoundaryComponent
+          : K extends "meta"
+            ? MetaFunction<(args: DataFunctionArgs) => Promise<LoaderSuccess>>
+            : K extends "routeId"
+              ? T[K]
+              : never;
 } & {
   useRouteLoaderData: () => PickDataAndStatus<LoaderSuccess>;
 };

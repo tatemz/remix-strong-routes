@@ -6,6 +6,7 @@ export {
   StrongActionWithCallbacks,
   StrongAction,
   StrongLoader,
+  StrongMeta,
   StrongComponent,
   StrongErrorBoundary,
 } from "./types";

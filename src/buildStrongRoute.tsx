@@ -26,7 +26,7 @@ const isRedirectStatus = (status: HttpStatusCode): status is RedirectStatus =>
 const isStrongResponseRedirect = (
   raw:
     | StrongResponse<unknown, NonRedirectStatus>
-    | StrongRedirect<string, RedirectStatus>,
+    | StrongRedirect<string, RedirectStatus>
 ): raw is StrongRedirect<string, RedirectStatus> =>
   isRedirectStatus(raw.status);
 
@@ -35,7 +35,7 @@ const handleSuccessForRemix = <
     | StrongResponse<unknown, NonRedirectStatus>
     | StrongRedirect<string, RedirectStatus>,
 >(
-  response: T,
+  response: T
 ) => {
   if (isStrongResponseRedirect(response)) {
     const { data, ...init } = response;
@@ -53,7 +53,7 @@ const handleDataFunctionForRemix = async <
   dataFunction:
     | StrongLoader<Failure, Success, Redirect>
     | StrongAction<Failure, Success, Redirect>,
-  args: DataFunctionArgs,
+  args: DataFunctionArgs
 ) => {
   const resultEither = await dataFunction(args);
 
@@ -94,7 +94,7 @@ export const buildStrongRoute = <
     ActionFailure,
     ActionRedirect,
     RouteId
-  >,
+  >
 ): StrongRemixRouteExports<typeof opts, Exclude<LoaderSuccess, never>> => {
   const { loader, action, Component, ErrorBoundary, meta } = opts;
   const output = {} as StrongRemixRouteExports<typeof opts, LoaderSuccess>;
