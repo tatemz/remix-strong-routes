@@ -53,13 +53,13 @@ export type StrongLoader<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
-  args: LoaderFunctionArgs
+  args: LoaderFunctionArgs,
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongMeta<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
 > = (
-  args: MetaArgs<(args: DataFunctionArgs) => Promise<Success>>
+  args: MetaArgs<(args: DataFunctionArgs) => Promise<Success>>,
 ) => MetaDescriptor[];
 
 export type StrongAction<
@@ -67,7 +67,7 @@ export type StrongAction<
   Success extends StrongResponse<unknown, NonRedirectStatus> = never,
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
-  args: ActionFunctionArgs
+  args: ActionFunctionArgs,
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongLoaderWithCallbacks<
@@ -76,7 +76,7 @@ export type StrongLoaderWithCallbacks<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: LoaderFunctionArgs,
-  callbacks: StrongCallbacks<Failure, Success, Redirect>
+  callbacks: StrongCallbacks<Failure, Success, Redirect>,
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongActionWithCallbacks<
@@ -85,7 +85,7 @@ export type StrongActionWithCallbacks<
   Redirect extends StrongRedirect<string, RedirectStatus> = never,
 > = (
   args: ActionFunctionArgs,
-  callbacks: StrongCallbacks<Failure, Success, Redirect>
+  callbacks: StrongCallbacks<Failure, Success, Redirect>,
 ) => Promise<Either.Either<Failure, Success | Redirect>>;
 
 export type StrongComponent<

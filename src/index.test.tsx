@@ -318,7 +318,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
       const element = await screen.findByTestId("success");
       expect(element).toMatchInlineSnapshot(`
@@ -368,7 +368,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
 
       const route1Data = await screen.findByTestId("success");
@@ -411,7 +411,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?fail" }]} />,
       );
       const element = await screen.findByTestId("failure");
 
@@ -446,7 +446,7 @@ describe("buildStrongRoute", () => {
       ]);
 
       const { container } = render(
-        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />
+        <RemixStub initialEntries={[{ pathname: "/", search: "?succeed" }]} />,
       );
       const element = (await screen.findByTestId("form")) as HTMLFormElement;
 
